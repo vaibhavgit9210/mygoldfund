@@ -134,6 +134,25 @@ function renderHeadline() {
   h += line("hl-g", a.gold, gI, "gold");
   h += line("hl-s", a.silver, sI, "silver");
 
+  /* If a leg is real money but no fund will take a ticket that small at this cadence,
+     say so out loud. Silently dropping it would contradict the split shown below. */
+  var dropped = [];
+  if (a.gold > 1 && !gI) dropped.push(["gold", a.gold]);
+  if (a.silver > 1 && !sI) dropped.push(["silver", a.silver]);
+  if (dropped.length) {
+    h += '<div class="hl-note" style="color:var(--warn)"><span>&#9888;</span><span>' +
+      dropped.map(function (d) {
+        var per = cadence === "day" ? d[1] / DAYS_PM : d[1];
+        var lo = Math.min.apply(null, candidates(d[0]).filter(function (x) {
+          return !x.avoid && (cadence !== "day" || x.dailySip);
+        }).map(function (x) { return (cadence === "day" ? (x.minSipDaily || x.minSip) : x.minSip) || 0; }).concat([99]));
+        return "The <b>" + d[0] + " leg is only " + inr(Math.round(per)) +
+          (cadence === "day" ? " a day" : "") + "</b>, below the " + inr(lo) +
+          " minimum every fund enforces. Run it monthly instead: " + inr(Math.round(d[1])) +
+          " once a month clears the minimum and costs the same.";
+      }).join(" ") + "</span></div>";
+  }
+
   if (a.park > 1) {
     h += '<div class="hl-line hl-c"><span>Park</span><span class="hl-amt">' +
       inr(Math.round(cadence === "day" ? a.park / DAYS_PM : a.park)) + (cadence === "day" ? "/day" : "") +
