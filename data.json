@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-08-27T11:46:42+00:00",
- "generatedIst": "27 Aug 2026, 17:16 IST",
+ "generatedAt": "2026-08-27T13:42:26+00:00",
+ "generatedIst": "27 Aug 2026, 19:12 IST",
  "asOfFix": "2026-08-26",
  "history": {
   "from": "1968-04-01",
@@ -13,11 +13,11 @@
  },
  "gold": {
   "usdOz": 4631.5,
-  "liveUsdOz": 4598.2,
+  "liveUsdOz": 4573.6,
   "inr": {
-   "parity": 14106.47,
-   "withDuty": 16222.44,
-   "withGst": 16709.11
+   "parity": 14031.0,
+   "withDuty": 16135.65,
+   "withGst": 16619.72
   },
   "last": 4631.5,
   "sma50": 4192.73,
@@ -35,11 +35,11 @@
  },
  "silver": {
   "usdOz": 68.495,
-  "liveUsdOz": 68.477,
+  "liveUsdOz": 67.921,
   "inr": {
-   "parity": 210.08,
-   "withDuty": 241.59,
-   "withGst": 248.83
+   "parity": 208.37,
+   "withDuty": 239.63,
+   "withGst": 246.81
   },
   "last": 68.495,
   "sma50": 61.3,
@@ -57,7 +57,7 @@
  },
  "gsr": {
   "value": 67.618,
-  "liveValue": 67.15,
+  "liveValue": 67.337,
   "windowYears": 30,
   "percentile": 0.5158,
   "robustZ": 0.047,
@@ -1000,6 +1000,11 @@
    "cat": "gold_etf",
    "date": "26-Aug-2026"
   },
+  "Axis Gold ETF": {
+   "nav": 132.8898,
+   "cat": "gold_etf",
+   "date": "26-Aug-2026"
+  },
   "Groww Gold ETF": {
    "nav": 15.5761,
    "cat": "gold_etf",
@@ -1017,6 +1022,11 @@
   },
   "360 ONE Silver ETF": {
    "nav": 236.6066,
+   "cat": "silver_etf",
+   "date": "26-Aug-2026"
+  },
+  "Axis Silver ETF": {
+   "nav": 239.0362,
    "cat": "silver_etf",
    "date": "26-Aug-2026"
   },
@@ -1042,6 +1052,16 @@
   },
   "Aditya Birla Sun Life Silver ETF FOF": {
    "nav": 37.409,
+   "cat": "silver_fof",
+   "date": "26-Aug-2026"
+  },
+  "Axis Gold Fund": {
+   "nav": 50.4482,
+   "cat": "gold_fof",
+   "date": "26-Aug-2026"
+  },
+  "Axis Silver Fund of Fund": {
+   "nav": 41.3076,
    "cat": "silver_fof",
    "date": "26-Aug-2026"
   },
@@ -1108,16 +1128,6 @@
   "Axis Gold and Silver Passive FOF": {
    "nav": 11.5568,
    "cat": "combo_fof",
-   "date": "26-Aug-2026"
-  },
-  "Axis Gold Fund": {
-   "nav": 50.4482,
-   "cat": "gold_fof",
-   "date": "26-Aug-2026"
-  },
-  "Axis Silver Fund of Fund": {
-   "nav": 41.3076,
-   "cat": "silver_fof",
    "date": "26-Aug-2026"
   },
   "Bandhan Gold ETF FOF": {
@@ -1265,11 +1275,6 @@
    "cat": "gold_etf",
    "date": "26-Aug-2026"
   },
-  "Axis Gold ETF": {
-   "nav": 132.8898,
-   "cat": "gold_etf",
-   "date": "26-Aug-2026"
-  },
   "Choice Gold ETF": {
    "nav": 158.3324,
    "cat": "gold_etf",
@@ -1306,9 +1311,9 @@
    "date": "26-Aug-2026"
   },
   "LIC MF Gold Exchange Traded Fund": {
-   "nav": 143.7433,
+   "nav": 141.3472,
    "cat": "gold_fof",
-   "date": "26-Aug-2026"
+   "date": "27-Aug-2026"
   },
   "Motilal Oswal Gold ETF": {
    "nav": 157.6832,
@@ -1342,11 +1347,6 @@
   },
   "ANGEL ONE SILVER ETF": {
    "nav": 9.1836,
-   "cat": "silver_etf",
-   "date": "26-Aug-2026"
-  },
-  "Axis Silver ETF": {
-   "nav": 239.0362,
    "cat": "silver_etf",
    "date": "26-Aug-2026"
   },
