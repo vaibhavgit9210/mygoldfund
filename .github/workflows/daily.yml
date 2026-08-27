@@ -1,0 +1,48 @@
+name: daily rebuild
+
+on:
+  schedule:
+    - cron: "30 2 * * *"      # 08:00 IST, so the numbers are fresh before the morning look
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scripts/**", "index.html", "app.js", "instruments.js", ".github/workflows/**"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-rebuild
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # No pip install on purpose: build_data.py is stdlib only and every source is keyless.
+      - name: Rebuild data
+        run: python3 scripts/build_data.py
+
+      - name: Sanity check the output
+        run: python3 scripts/sanity_check.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "mygoldfund bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- data.js data.json; then
+            echo "no change"
+          else
+            git add data.js data.json
+            git commit -m "data: rebuild $(date -u +%Y-%m-%d)"
+            git push origin main
+          fi
+
+      - name: Publish to gh-pages
+        run: git push --force origin main:gh-pages
