@@ -463,7 +463,30 @@ function setTheme(t) {
   document.getElementById("thDark").setAttribute("aria-pressed", t === "dark");
 }
 
+/* The page must never present stale numbers as if they were today's. If the daily
+   rebuild stops for any reason, this says so at the top rather than failing silently. */
+function renderStaleness() {
+  var el = document.getElementById("staleness");
+  if (!el) return;
+  var built = Date.parse(D.generatedAt);
+  if (isNaN(built)) { el.innerHTML = ""; return; }
+  var days = (Date.now() - built) / 86400000;
+  if (days <= 2) { el.innerHTML = ""; return; }
+  var bad = days > 7;
+  el.innerHTML = '<div class="stale ' + (bad ? "bad" : "warn") + '"><span class="inner">' +
+    (bad ? "&#9888; <b>Do not act on these numbers.</b> " : "&#9888; <b>Heads up.</b> ") +
+    "The daily rebuild last ran <b>" + Math.floor(days) + " days ago</b> (" + esc(D.generatedIst) + "). " +
+    (bad
+      ? "Prices, volatility and the ratio have all moved since then, so the split below is out of date. "
+      : "The split below is still close but no longer today's. ") +
+    'Check the <a href="https://github.com/vaibhavgit9210/mygoldfund/actions" target="_blank" rel="noopener">' +
+    "workflow runs</a>. GitHub also switches scheduled workflows off after 60 days without repository activity, " +
+    "and re-running it once from that page turns it back on." +
+    "</span></div>";
+}
+
 function renderAll() {
+  renderStaleness();
   document.getElementById("tabSignal").setAttribute("aria-selected", S.board === "signal");
   document.getElementById("tabSafe").setAttribute("aria-selected", S.board === "safe");
   document.getElementById("tabsub").textContent = S.board === "safe" ? I.blurb.safe : I.blurb.signal;

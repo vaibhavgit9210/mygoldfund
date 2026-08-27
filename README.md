@@ -82,6 +82,28 @@ python3 scripts/sanity_check.py   # refuse to publish broken data
 open index.html
 ```
 
-The Action reruns this at 02:30 UTC (08:00 IST) daily, sanity checks it, commits only if changed, and force pushes to `gh-pages`.
+## Does it really update daily?
+
+Yes, and it is built to fail loudly rather than quietly.
+
+The Action runs **twice a day**, at 02:30 and 08:30 UTC (08:00 and 14:00 IST). It rebuilds `data.js`,
+runs `sanity_check.py`, commits only if something changed, and force pushes to `gh-pages`. Two runs
+because GitHub delays and sometimes silently drops scheduled jobs under load; the job is idempotent,
+so the second attempt costs nothing.
+
+Three safety nets, because a dashboard you act on with money must never present stale numbers as current:
+
+1. **`sanity_check.py` refuses to publish nonsense.** It rejects implausible prices, weights outside
+   their own bounds, an India parity figure that does not reconcile against spot and FX, and any LBMA
+   fix more than 7 days old. A failed check means the site keeps the last good data rather than
+   publishing garbage.
+2. **The page declares its own age.** More than 2 days since the last successful rebuild and a banner
+   appears at the top. More than 7 days and it turns red and says *do not act on these numbers*.
+3. **A failed run opens a GitHub issue**, which lands in your email.
+
+**The one thing to know:** this is a public repository, and GitHub **automatically disables scheduled
+workflows after 60 days of repository inactivity**. If that happens the staleness banner will tell you.
+The fix is one click: open [the Actions tab](https://github.com/vaibhavgit9210/mygoldfund/actions),
+select "daily rebuild", and press "Run workflow". That re-enables the schedule.
 
 Screenshot hooks: `#shot=signal|safe`, `&theme=light|dark`, `&mode=month|day`.

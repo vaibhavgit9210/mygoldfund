@@ -8,7 +8,9 @@ https://vaibhavkumar.is-a.dev/mygoldfund/ (Pages from `gh-pages`, so push BOTH `
 - `index.html` + `app.js` + `instruments.js` (hand maintained constants) + `data.js` (generated, never edit)
 - `scripts/build_data.py` pulls data and computes everything. **Stdlib only, deliberately** so the Action needs no pip install.
 - `scripts/sanity_check.py` gates publication. Add a check here whenever a new failure mode appears.
-- `.github/workflows/daily.yml` reruns at 02:30 UTC, commits only on change, force pushes `main:gh-pages`.
+- `.github/workflows/daily.yml` runs **twice daily** (02:30 and 08:30 UTC), commits only on change,
+  force pushes `main:gh-pages`, and opens an issue on failure. Two crons because GitHub drops scheduled
+  runs under load and the job is idempotent.
 
 ## Things that will bite you
 
@@ -23,6 +25,15 @@ https://vaibhavkumar.is-a.dev/mygoldfund/ (Pages from `gh-pages`, so push BOTH `
 - Stooq is behind a JS proof of work challenge now, unusable. LBMA + FRED + frankfurter + mfapi all work keyless.
 - The analytics beacon's `setInterval` will hang headless Chrome unless you pass `--timeout`. It early returns
   on `file:`, so local screenshots are fine.
+
+## Keeping the daily update alive
+
+The repo is **public**, so GitHub disables scheduled workflows after **60 days of repository
+inactivity**. The bot's daily data commit may or may not reset that timer, so do not rely on it.
+The real protection is that the page renders a staleness banner once the build is more than 2 days
+old (red past 7, saying do not act on the numbers). Recovery is one `workflow_dispatch` from the
+Actions tab. If this ever needs to be bulletproof, the clean fix is a Cloudflare Worker cron on the
+vaibhavpro9210 account calling the `workflow_dispatch` API with a PAT stored as a Worker secret.
 
 ## The model, and what is honest about it
 

@@ -36,6 +36,13 @@ body{
 }
 .num{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
 .wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+.stale{padding:11px 18px;font-size:13px;font-weight:600;display:flex;gap:9px;align-items:flex-start;line-height:1.5}
+.stale.warn{background:color-mix(in srgb,var(--warn) 16%,var(--bg));color:var(--warn);
+  border-bottom:1px solid color-mix(in srgb,var(--warn) 40%,transparent)}
+.stale.bad{background:color-mix(in srgb,var(--bad) 18%,var(--bg));color:var(--bad);
+  border-bottom:1px solid color-mix(in srgb,var(--bad) 45%,transparent)}
+.stale b{font-weight:800}
+.stale span.inner{max-width:1044px;margin:0 auto;display:block}
 a{color:var(--accent)}
 h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
 
@@ -203,6 +210,8 @@ footer{margin-top:44px;padding:22px 0;border-top:1px solid var(--line);color:var
   </div>
  </div>
 </header>
+
+<div id="staleness"></div>
 
 <main class="wrap">
  <div class="tabs" role="tablist">
