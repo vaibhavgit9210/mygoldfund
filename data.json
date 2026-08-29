@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-08-29T09:51:13+00:00",
- "generatedIst": "29 Aug 2026, 15:21 IST",
+ "generatedAt": "2026-08-29T13:56:52+00:00",
+ "generatedIst": "29 Aug 2026, 19:26 IST",
  "asOfFix": "2026-08-28",
  "history": {
   "from": "1968-04-01",
@@ -936,10 +936,10 @@
  },
  "indiaPremium": {
   "gold": {
-   "premium": -4.98,
-   "percentile": 0.1986,
-   "avg90": -5.84,
-   "spread": 0.0,
+   "premium": -4.1,
+   "percentile": 0.2197,
+   "avg90": -4.98,
+   "spread": 1.76,
    "sources": [
     {
      "source": "GOLDBEES",
@@ -948,6 +948,14 @@
      "avg90": -5.84,
      "days": 2337,
      "from": "2016-11-07"
+    },
+    {
+     "source": "ICICI Gold ETF",
+     "premium": -3.22,
+     "percentile": 0.2408,
+     "avg90": -4.13,
+     "days": 1911,
+     "from": "2018-07-03"
     }
    ]
   },
