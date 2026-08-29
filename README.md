@@ -1,16 +1,25 @@
 # mygoldfund
 
-A monthly gold and silver allocation dashboard. It answers one question at the start of each month:
-**how much of my budget goes into gold, how much into silver, and through which instrument.**
+A monthly allocation dashboard. It answers one question at the start of each month:
+**where does this month's money go, and through which fund.**
+Two boards answer it for gold and silver, two answer it for a global multi asset mix.
 
 Live at https://vaibhavkumar.is-a.dev/mygoldfund/
 
-Two boards, same structure, different objective:
+Four boards, same structure, different objective:
 
-- **Signal** tries to allocate well. Risk parity sets a neutral anchor, the gold silver ratio tilts it. Always fully invested.
-- **Safe** tries to lose less. Minimum variance (which means gold heavy), plus it holds part of the budget back in a liquid fund when metal volatility runs hot.
+| Board | Universe | Objective |
+|---|---|---|
+| **Signal** | gold + silver | Allocate well. Risk parity anchor, gold silver ratio tilts it. Always fully invested. |
+| **Safe** | gold + silver | Lose less. Minimum variance, and it parks part of the budget in a liquid fund when metal volatility runs hot. |
+| **Growth** | 6 asset classes, Indian mutual funds only | Go global without leaving the country. Equal risk contribution, fully invested, no LRS and no extra tax form. |
+| **Offshore** | 5 asset classes incl. Bitcoin, US listed ETFs | The same idea through a real foreign brokerage account under the Liberalised Remittance Scheme. |
 
-Budget modes: ₹3,000/month, ₹100/day, or any custom amount. Currency toggle for Indian landed prices or international spot. Light and dark.
+The two multi asset boards deploy the **entire budget** every month and never park anything. Everything on
+every board is a mutual fund: an index fund, a fund of funds, or a US listed ETF. No single stocks, no coins
+held directly.
+
+Budget modes: ₹5,000/month, ₹167/day, or any custom amount. Currency toggle for Indian landed prices or international spot. Light and dark.
 
 ## Where the numbers come from
 
@@ -22,7 +31,9 @@ Everything is keyless and public. No API keys, no accounts, no paid feeds.
 | USD/INR | ECB via `api.frankfurter.dev`, FRED `DEXINUS` as fallback | Official reference rates |
 | Live spot | `api.gold-api.com` | Intraday colour only, signals run off the LBMA fix |
 | Indian fund NAVs | AMFI `NAVAll.txt` | The official daily NAV file, 82 gold and silver schemes |
-| NAV history | `api.mfapi.in` | Used to measure the India local premium |
+| NAV history | `api.mfapi.in` | The India local premium, and the Indian, emerging market and gold sleeves |
+| S&P 500, Nasdaq 100 | FRED `SP500`, `NASDAQ100` | Daily index levels, keyless CSV |
+| Bitcoin | `api.blockchain.info` market price chart | Daily BTC/USD back to 2010, keyless |
 
 `scripts/build_data.py` pulls all of it, computes every indicator, and writes `data.js`. It is **stdlib only on purpose**, so the GitHub Action needs no `pip install` and cannot break on a dependency.
 
@@ -38,6 +49,40 @@ Measured from 14,650 daily LBMA observations, 1968 to 2026. All of this is repro
 
 **India local premium.** An Indian metal ETF's NAV is (grams per unit) × (domestic price). Grams per unit is unknown but constant, so `NAV / import parity`, normalised by its own median, isolates how far the Indian price sits from parity. Computed at two fund houses per metal as a cross check. This is what flags a local squeeze like October 2025, when Indian silver ETFs ran 5% to 12% rich and five AMCs froze lumpsum subscriptions.
 
+### The multi asset boards
+
+**One rule: equal risk contribution.** Weights are chosen so every sleeve is responsible for the same share of
+portfolio variance. With two assets that is a closed form, which is what the Signal board uses. With five or six
+it is not, so it is solved numerically by cyclical coordinate descent on the convex log barrier problem
+(Spinu 2013). The published risk share column comes out at exactly 1/n, which is the only proof the solver worked.
+
+**Risk is measured in rupees.** The dollar leg of a US index fund is part of an Indian investor's risk, not a
+footnote to it, so every series is converted to INR before anything is estimated.
+
+**No forward filling.** Sleeves are aligned only on days when *every* market in the mix was open, about 229 a
+year rather than 252. The annualisation factor is measured from that, not assumed. A holiday in one country
+never invents a zero return in another.
+
+**The covariance is deliberately blunted.** Volatility is half EWMA (λ = 0.94) and half full window, because
+pure EWMA has an 11 day half life, which is far too twitchy for a mix set once a month: it read the Nifty 50 at
+8% during a calm stretch against a realistic 13%. Correlations are shrunk 20% toward their average (Ledoit and
+Wolf 2003).
+
+#### Three things I tried and did not ship
+
+**A momentum tilt.** Ranking sleeves by 12 month return excluding the last month and shifting the risk budget
+toward the winners. Walked forward at four tilt strengths, it **hurt monotonically** on the Growth board and on
+Offshore bought about 2.5% of terminal value for about 3 points more drawdown. A signal whose sign flips between
+two overlapping universes is noise. There is no tilt and no market timing on these boards at all.
+
+**A volatility target reached by concentration.** Bisecting a risk seeking exponent to hit a higher vol target
+sounds principled and is not: because Bitcoin was both the most volatile sleeve and the worst performer, it
+loaded 35% into the asset that was crashing, *because* it was crashing. Volatility seeking is not return seeking.
+
+**Capping gold for optics.** Tested at 25%, 15%, 10% and zero. Removing gold from the Offshore board left the
+return essentially unchanged and pushed the worst drawdown from about 19% to about 30%. Gold stays uncapped as
+one sleeve of five or six, which is what "not limited to gold" actually means here.
+
 ### What the backtests actually showed
 
 Walk forward, no lookahead, over overlapping ten year monthly SIPs.
@@ -48,9 +93,16 @@ Walk forward, no lookahead, over overlapping ten year monthly SIPs.
 | Does holding 100% gold beat 67/33? | Also yes, in about two thirds of windows, median +3%, **and with lower drawdown** |
 | Is the ratio mean reverting? | Weakly. ADF t = −3.05 over 58 years, clears 5% but not 1%, half life ~2.5 years. **Not stationary in 1975-2000 or 2010-2026** |
 | Does volatility targeting help? | Yes, clearly. Median worst drawdown **17.3% → 10.8%**, p95 **62% → 42%**, with terminal value slightly ahead. Held in every decade tested |
-| Daily ₹100 vs monthly ₹3,000? | No material difference. Indian evidence: Nifty 500 TRI 1999-2020, daily 12.13% XIRR vs monthly 12.15% |
+| Daily ₹167 vs monthly ₹5,000? | No material difference. Indian evidence: Nifty 500 TRI 1999-2020, daily 12.13% XIRR vs monthly 12.15% |
+| Does equal risk contribution beat holding one thing? | **Not on return, clearly on drawdown.** On both multi asset boards its worst peak to trough fall was smaller than every single sleeve held alone. On both, one sleeve (gold on Growth, Bitcoin on Offshore) beat the mix on final value with roughly double to quadruple the drawdown |
 
-The honest summary: the **instrument choice matters more than the allocation model**. Routing ₹3,000 through PhonePe digital gold instead of a cheap fund of funds costs 3% to 8% up front, which is several times larger than anything the split can earn back.
+The honest summary: the **instrument choice matters more than the allocation model**. Routing ₹5,000 through PhonePe digital gold instead of a cheap fund of funds costs 3% to 8% up front, which is several times larger than anything the split can earn back.
+
+The offshore board is the same lesson at a larger scale. The outward remittance fee is flat, roughly ₹500 a
+wire, so sending ₹5,000 every month costs about **10.5%** of everything remitted while sending the same year's
+money in one wire costs about **1.3%**. The ETFs themselves cost 0.03% to 0.25% a year. The remittance schedule
+is between forty and a hundred times more consequential than which fund you pick, which is why that board tells
+you to keep the habit in rupees and remit once a year.
 
 ## Honest limitations
 
@@ -58,6 +110,14 @@ The honest summary: the **instrument choice matters more than the allocation mod
 - Equal risk contribution at two assets is a formula, not an optimisation. It is an honest way to pick a number, not machine learning.
 - The "above 80 buy silver, below 50 buy gold" rule has **no primary institutional source**. It traces to bullion dealers, not to the World Gold Council, LBMA or CME. That is why this uses percentile ranks instead.
 - One or two years is far too short to judge any of this. The effects measured are a few percent over a decade.
+- The multi asset boards can only be measured back to the point where every sleeve existed: about **7 years**
+  for Growth and **10** for Offshore, against 58 for the metal boards. That window contained a historic run in
+  both US technology and gold. Treat it as one regime, not as evidence.
+- **Schedule FA is the real risk on the Offshore board**, and it is not a market risk. Holding any foreign asset
+  means disclosing it in your return every year at any size; non disclosure sits under the Black Money Act where
+  the penalty is ₹10 lakh, on a holding that might be worth ₹60,000.
+- Three Growth sleeves invest abroad and share **one SEBI ceiling** that has been full since February 2022.
+  Fresh subscriptions can be suspended with a few days' notice, so an instalment can simply bounce.
 - Not investment advice. I am not a registered adviser.
 
 ## Stale risk register
@@ -73,6 +133,10 @@ Re-check these; they move and they change the answer.
 | LTCG | ETF 12 months, FoF 24 months, both 12.5% | Income-tax Act 2025. Gold and silver funds escaped the s.76 specified-mutual-fund net |
 | SGB | Not usable | Finance Act 2026 narrowed the maturity exemption to **original subscribers only** from 1 Apr 2026, so secondary buyers lose it |
 | PhonePe spread | Unverified | PhonePe publishes no spread anywhere. The 3% to 8% range is from secondary sources |
+| Sleeve fund TERs | `instruments.js` `sleeveFunds` | **Approximate, verify before acting.** Index fund and feeder TERs move, and a feeder costs its own fee plus the underlying fund's |
+| LRS TCS threshold | ₹10 lakh a financial year | Raised from ₹7 lakh in the 2025 Budget. Irrelevant at ₹60,000 a year but it is a live number |
+| Wire fee and FX markup | ₹500 flat + 0.5% | Broker and bank dependent; a bank is 1% to 2%. This constant drives the whole Offshore cost argument |
+| SEBI overseas cap | ~$7bn, full since Feb 2022 | Reopens and closes without much notice |
 
 ## Running it
 
@@ -106,4 +170,5 @@ workflows after 60 days of repository inactivity**. If that happens the stalenes
 The fix is one click: open [the Actions tab](https://github.com/vaibhavgit9210/mygoldfund/actions),
 select "daily rebuild", and press "Run workflow". That re-enables the schedule.
 
-Screenshot hooks: `#shot=signal|safe`, `&theme=light|dark`, `&mode=month|day`.
+Screenshot hooks: `#shot=signal|safe|growth|offshore`, `&theme=light|dark`, `&mode=month|day`.
+(The daily cadence is hidden on the multi asset boards: six sleeves cannot be bought daily at a sane ticket size.)

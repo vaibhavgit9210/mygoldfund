@@ -21,6 +21,10 @@ from datetime import datetime, timezone, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UA = {"User-Agent": "Mozilla/5.0 (compatible; mygoldfund/1.0; +https://github.com/vaibhavgit9210/mygoldfund)"}
+# FRED does not reject our normal User-Agent, it just never answers: the connection hangs
+# until the socket times out. That is why the DEXINUS fallback below had never actually run.
+# Requests to FRED therefore go out with a plain curl style header instead.
+FRED_UA = {"User-Agent": "curl/8.7.1", "Accept": "*/*"}
 
 # ---------------------------------------------------------------- model constants
 # Every number here is either measured from the LBMA history in this script or
@@ -36,6 +40,20 @@ EWMA_WINDOW      = 500
 CORR_WINDOW      = 60
 VOL_TARGET       = 0.15     # annualised, the Safe dashboard's portfolio vol budget
 
+# ---- multi asset boards (Growth, Offshore) ----
+# These two boards deploy the whole budget across several asset classes instead of two
+# metals. With more than two assets equal risk contribution stops having a closed form,
+# so it is solved numerically below. Nothing here is tilted or timed: the tilt was tested
+# and rejected, see README.
+MONTHLY_BUDGET   = 5000     # the default monthly amount the whole dashboard is written around
+MULTI_BOUNDS     = (0.05, 0.35)   # per sleeve weight bounds. 5% of 5,000 is 250, the smallest
+                                  # ticket a monthly SIP can still place at a real fund minimum.
+MULTI_EW_BLEND   = 0.50     # weight on EWMA variance vs full window variance in the vol estimate.
+                            # Pure EWMA at lambda 0.94 has an 11 day half life, far too twitchy
+                            # for a mix you set once a month across six asset classes.
+MULTI_CORR_SHRINK= 0.20     # shrink correlations toward their average (Ledoit and Wolf style)
+MULTI_WARMUP     = 500      # observations required before the backtest places its first SIP
+
 # India landed price. Verified constants live in instruments.js; these mirror them.
 # India raised the effective import duty on gold and silver from 6% to 15% with effect
 # from 13 May 2026 (Basic Customs Duty 10% + AIDC 5%). Getting this wrong understates the
@@ -48,10 +66,11 @@ TROY_OZ_G = 31.1034768
 # ---------------------------------------------------------------- fetch helpers
 
 def http(url, timeout=90, tries=3):
+    hdr = FRED_UA if "stlouisfed.org" in url else UA
     last = None
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, headers=UA)
+            req = urllib.request.Request(url, headers=hdr)
             return urllib.request.urlopen(req, timeout=timeout).read()
         except Exception as e:                      # noqa: BLE001
             last = e
@@ -350,6 +369,329 @@ def india_premium(metal_px, fx_hist, schemes):
         "sources": results,
     }
 
+# ---------------------------------------------------------------- multi asset sleeves
+# Every sleeve is something buyable as a MUTUAL FUND (an index fund, a fund of funds, or a
+# US listed ETF), never a single stock and never a coin held directly. The fund that
+# implements each sleeve on each route lives in instruments.js; this file only measures.
+#
+# Two price sources per sleeve are avoided on purpose. Where an Indian feeder fund exists
+# its NAV is used directly, because a NAV is the return actually available to a unit holder
+# net of the fund's own costs, which an index level is not.
+
+SLEEVES = [
+    {"id": "nifty50",   "name": "India large cap",   "short": "Nifty 50",
+     "src": ("mf", [120716, 119063, 120620]),
+     "what": "The Nifty 50, through an index fund. Measured off UTI's direct plan NAV."},
+    {"id": "midcap150", "name": "India midcap",      "short": "Nifty Midcap 150",
+     "src": ("mf", [147621, 148726, 149389, 150673]),
+     "what": "The Nifty Midcap 150. Higher beta than the Nifty and the usual way an Indian portfolio reaches for growth at home."},
+    {"id": "sp500",     "name": "US large cap",      "short": "S&P 500",
+     "src": ("fred", "SP500"),
+     "what": "The S&P 500, converted to rupees. The single most widely held equity index on earth."},
+    {"id": "ndx100",    "name": "US tech",           "short": "Nasdaq 100",
+     "src": ("fred", "NASDAQ100"),
+     "what": "The Nasdaq 100, converted to rupees. Concentrated in a handful of very large technology companies."},
+    {"id": "emxi",      "name": "Emerging ex India", "short": "EM ex India",
+     "src": ("mf", [119779, 140327, 138456]),
+     "what": "China, Taiwan, Korea and Brazil, through an Indian feeder fund. Cheap on valuation for years, and still cheap."},
+    {"id": "gold",      "name": "Gold",              "short": "Gold",
+     "src": ("gold", None),
+     "what": "The same LBMA gold the other two boards are built on, in rupees per gram."},
+    {"id": "btc",       "name": "Bitcoin",           "short": "Bitcoin",
+     "src": ("btc", None),
+     "what": "Bitcoin, held through a US listed spot Bitcoin ETF. Offshore only: no Indian mutual fund may hold crypto."},
+]
+
+# Which sleeves each board is allowed to use, and why the two lists differ.
+#   growth   : everything an Indian resident can buy as a domestic mutual fund, no LRS.
+#              Bitcoin is absent because no Indian mutual fund is permitted to hold it.
+#   offshore : what a US brokerage account reached through the Liberalised Remittance
+#              Scheme can buy. Indian equity is absent because remitting money abroad to
+#              buy India back is strictly worse than buying it at home.
+GROWTH_KEYS   = ["nifty50", "midcap150", "sp500", "ndx100", "emxi", "gold"]
+OFFSHORE_KEYS = ["sp500", "ndx100", "emxi", "gold", "btc"]
+
+def fetch_fred(series):
+    """Daily index level from FRED. Keyless CSV. See FRED_UA above for the header trap."""
+    txt = http("https://fred.stlouisfed.org/graph/fredgraph.csv?id=%s" % series).decode()
+    out = {}
+    for row in csv.reader(io.StringIO(txt)):
+        if len(row) < 2:
+            continue
+        try:
+            v = float(row[1])
+            if v > 0:
+                out[row[0]] = v
+        except ValueError:                          # header row and "." for market holidays
+            pass
+    return out
+
+def fetch_btc_usd():
+    """Daily BTC/USD back to 2010 from blockchain.info's public chart API. Keyless."""
+    d = jget("https://api.blockchain.info/charts/market-price?timespan=all&format=json&sampled=false",
+             timeout=90)
+    out = {}
+    for p in d.get("values", []):
+        if p.get("y", 0) > 0:
+            out[datetime.fromtimestamp(p["x"], timezone.utc).strftime("%Y-%m-%d")] = p["y"]
+    return out
+
+def fetch_first_nav(codes, need=250):
+    """First scheme code that answers with enough history. mfapi returns a 502 for a given
+    code often enough that a single hardcoded code is not safe to build a board on."""
+    for c in codes:
+        h = fetch_nav_history(c)
+        if len(h) >= need:
+            return h, c
+    return {}, None
+
+def to_inr(series, fx_hist):
+    """A dollar series becomes a rupee series. Risk is measured in rupees throughout,
+    because rupees are the currency being spent: for an Indian investor the currency leg
+    of a US index fund is part of the risk, not a footnote to it."""
+    fxd = sorted(fx_hist)
+    out = {}
+    for d, v in series.items():
+        i = bisect.bisect_right(fxd, d) - 1
+        if i >= 0:
+            out[d] = v * fx_hist[fxd[i]]
+    return out
+
+# ---------------------------------------------------------------- N asset risk model
+
+def corr_matrix(R):
+    n, T = len(R), len(R[0])
+    m = [mean(r) for r in R]
+    s = [stdev(r) for r in R]
+    C = [[1.0] * n for _ in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if s[i] <= 0 or s[j] <= 0:
+                continue
+            c = sum((R[i][t] - m[i]) * (R[j][t] - m[j]) for t in range(T)) / ((T - 1) * s[i] * s[j])
+            C[i][j] = C[j][i] = c
+    return C
+
+def shrink_corr(C, delta=MULTI_CORR_SHRINK):
+    """Pull every correlation toward the average correlation. A sample correlation matrix
+    estimated from a few years of data is the noisiest input in the whole model, and this
+    is the cheap standard defence (Ledoit and Wolf 2003)."""
+    n = len(C)
+    if n < 2:
+        return C
+    off = [C[i][j] for i in range(n) for j in range(n) if i != j]
+    a = mean(off)
+    return [[1.0 if i == j else (1 - delta) * C[i][j] + delta * a for j in range(n)] for i in range(n)]
+
+def ewma_var_daily(rets, lam=EWMA_LAMBDA, window=750):
+    """Per observation EWMA variance. Deliberately NOT annualised here: these boards are
+    sampled on the days every market in the mix was open, about 229 a year rather than 252,
+    so the annualisation factor is measured from the data instead of assumed."""
+    r = rets[-window:]
+    if len(r) < 50:
+        r = rets
+    v = r[0] ** 2
+    for x in r[1:]:
+        v = lam * v + (1 - lam) * x * x
+    return v
+
+def estimate_cov(px_cols, ann):
+    """Annualised vols (EWMA blended with the full window) and a shrunk correlation matrix,
+    combined into a daily covariance matrix."""
+    R = [logret(p) for p in px_cols]
+    v_ew = [math.sqrt(ewma_var_daily(r) * ann) for r in R]
+    v_lr = [stdev(r) * math.sqrt(ann) for r in R]
+    vol = [math.sqrt(MULTI_EW_BLEND * v_ew[i] ** 2 + (1 - MULTI_EW_BLEND) * v_lr[i] ** 2)
+           for i in range(len(R))]
+    C = shrink_corr(corr_matrix(R))
+    S = [[vol[i] * vol[j] * C[i][j] / ann for j in range(len(R))] for i in range(len(R))]
+    return vol, v_ew, v_lr, C, S
+
+def port_vol_n(w, S, ann):
+    q = sum(w[i] * w[j] * S[i][j] for i in range(len(w)) for j in range(len(w)))
+    return math.sqrt(max(0.0, q)) * math.sqrt(ann)
+
+def risk_budget_weights(S, b, iters=500):
+    """Long only weights whose risk contributions match the budget b, by cyclical coordinate
+    descent on the convex log barrier problem (Spinu 2013). With b equal for every sleeve
+    this is exactly equal risk contribution, the N asset generalisation of the two asset
+    formula the Signal board uses."""
+    n = len(b)
+    w = [1.0 / n] * n
+    for _ in range(iters):
+        mx = 0.0
+        for i in range(n):
+            if S[i][i] <= 0:
+                continue
+            c = sum(S[i][j] * w[j] for j in range(n) if j != i)
+            ni = (-c + math.sqrt(c * c + 4 * S[i][i] * b[i])) / (2 * S[i][i])
+            mx = max(mx, abs(ni - w[i]))
+            w[i] = ni
+        if mx < 1e-13:
+            break
+    t = sum(w)
+    return [x / t for x in w]
+
+def bound_weights(w, lo, hi):
+    """Clip to the per sleeve bounds and push the excess onto whatever is still free."""
+    w = list(w)
+    for _ in range(100):
+        w = [min(hi, max(lo, x)) for x in w]
+        t = sum(w)
+        if abs(t - 1.0) < 1e-12:
+            break
+        free = [i for i in range(len(w)) if lo < w[i] < hi]
+        if not free:
+            return [x / t for x in w]
+        excess = t - 1.0
+        fs = sum(w[i] for i in free)
+        for i in free:
+            w[i] -= excess * w[i] / fs
+    return w
+
+def erc_weights(S, n, bounds=MULTI_BOUNDS):
+    return bound_weights(risk_budget_weights(S, [1.0 / n] * n), *bounds)
+
+def round_weights(w, dp=4):
+    """Round for publication but keep the sum exactly 1. Rounding each weight independently
+    lets the total drift to 1.0001, and the page turns weights into rupees, so a split that
+    does not add up to the budget is a visible bug rather than a rounding detail."""
+    r = [round(x, dp) for x in w]
+    big = max(range(len(r)), key=lambda i: r[i])
+    r[big] = round(r[big] + (1.0 - sum(r)), dp)
+    return r
+
+def risk_contributions(w, S):
+    """Share of portfolio variance each sleeve is responsible for. The point of ERC is that
+    these come out roughly equal, and showing them is the only way to prove the solver worked."""
+    n = len(w)
+    tot = sum(w[i] * w[j] * S[i][j] for i in range(n) for j in range(n))
+    if tot <= 0:
+        return [1.0 / n] * n
+    return [w[i] * sum(S[i][j] * w[j] for j in range(n)) / tot for i in range(n)]
+
+def obs_per_year(days):
+    span = (datetime.strptime(days[-1], "%Y-%m-%d") - datetime.strptime(days[0], "%Y-%m-%d")).days / 365.25
+    return len(days) / span if span > 0 else 252.0
+
+def backtest_board(keys, cols, days, ann, bounds=MULTI_BOUNDS, warm=MULTI_WARMUP):
+    """Walk forward monthly SIP with no lookahead: at each rebalance the covariance is
+    re estimated from data available on that date only. Reports the money weighted multiple
+    on everything invested and the worst peak to trough fall of the accumulated pot.
+
+    Benchmarks matter more than the headline here, so every single sleeve is run on its own
+    alongside the mix. If one of them wins, the page says so."""
+    reb, seen = [], set()
+    for i, d in enumerate(days):
+        if i < warm:
+            continue
+        if d[:7] not in seen:
+            seen.add(d[:7])
+            reb.append(i)
+    if len(reb) < 24:
+        return None
+
+    n = len(keys)
+    strategies = {"board": [0.0] * n, "equal": [0.0] * n}
+    for k in range(n):
+        strategies["solo_" + keys[k]] = [0.0] * n
+    invested = 0.0
+    curves = {k: [] for k in strategies}
+
+    for m, i in enumerate(reb):
+        sub = [c[:i + 1] for c in cols]
+        _, _, _, _, S = estimate_cov(sub, ann)
+        w_board = erc_weights(S, n, bounds)
+        invested += MONTHLY_BUDGET
+        for name, units in strategies.items():
+            if name == "board":
+                w = w_board
+            elif name == "equal":
+                w = [1.0 / n] * n
+            else:
+                j = keys.index(name[5:])
+                w = [1.0 if q == j else 0.0 for q in range(n)]
+            for j in range(n):
+                if w[j] > 0:
+                    units[j] += MONTHLY_BUDGET * w[j] / cols[j][i]
+        end = reb[m + 1] if m + 1 < len(reb) else len(days)
+        for t in range(i, end):
+            for name, units in strategies.items():
+                curves[name].append(sum(units[j] * cols[j][t] for j in range(n)))
+
+    def summarise(vals):
+        peak, dd = -1e18, 0.0
+        for x in vals:
+            peak = max(peak, x)
+            dd = min(dd, x / peak - 1)
+        return {"multiple": round(vals[-1] / invested, 4), "maxDrawdown": round(dd * 100, 2)}
+
+    out = {"sips": len(reb), "from": days[reb[0]], "to": days[-1], "invested": round(invested),
+           "monthly": MONTHLY_BUDGET,
+           "board": summarise(curves["board"]), "equal": summarise(curves["equal"]),
+           "solo": {keys[k]: summarise(curves["solo_" + keys[k]]) for k in range(n)}}
+    best = max(out["solo"], key=lambda k: out["solo"][k]["multiple"])
+    out["bestSolo"] = best
+    out["boardBeatEqual"] = out["board"]["multiple"] > out["equal"]["multiple"]
+    out["boardBeatEverySoloDrawdown"] = all(
+        out["board"]["maxDrawdown"] > out["solo"][k]["maxDrawdown"] for k in out["solo"])
+    return out
+
+def build_multi_board(keys, inr_series, meta_by_id, bounds=MULTI_BOUNDS):
+    """One board: align the sleeves onto the days every one of them actually traded, estimate,
+    solve equal risk contribution, and backtest. No forward filling anywhere, so a public
+    holiday in one market never invents a zero return in another."""
+    common = None
+    for k in keys:
+        ds = set(inr_series[k])
+        common = ds if common is None else (common & ds)
+    days = sorted(common)
+    if len(days) < 750:
+        sys.stderr.write("  board %s: only %d common days, skipping\n" % (",".join(keys), len(days)))
+        return None
+
+    cols = [[inr_series[k][d] for d in days] for k in keys]
+    ann = obs_per_year(days)
+    vol, v_ew, v_lr, C, S = estimate_cov(cols, ann)
+    n = len(keys)
+    w = erc_weights(S, n, bounds)
+    rc = risk_contributions(w, S)
+    w = round_weights(w)
+    step = max(1, int(round(ann / 12)))
+
+    sleeves = []
+    for i, k in enumerate(keys):
+        p = cols[i]
+        avg_corr = mean([C[i][j] for j in range(n) if j != i]) if n > 1 else 0.0
+        sleeves.append({
+            "id": k,
+            "name": meta_by_id[k]["name"], "short": meta_by_id[k]["short"],
+            "what": meta_by_id[k]["what"],
+            "weight": w[i],
+            "riskShare": round(rc[i], 4),
+            "vol": round(vol[i] * 100, 2),
+            "volEwma": round(v_ew[i] * 100, 2),
+            "volLong": round(v_lr[i] * 100, 2),
+            "avgCorr": round(avg_corr, 3),
+            "ret1y": round((p[-1] / p[-int(ann)] - 1) * 100, 2) if len(p) > ann else None,
+            "mom12_1": round((p[-step] / p[-13 * step] - 1) * 100, 2) if len(p) > 13 * step else None,
+            "ddFromHigh": round((p[-1] / max(p) - 1) * 100, 2),
+        })
+
+    return {
+        "keys": keys,
+        "sleeves": sleeves,
+        "corr": [[round(C[i][j], 3) for j in range(n)] for i in range(n)],
+        "portVol": round(port_vol_n(w, S, ann) * 100, 2),
+        "equalWeightVol": round(port_vol_n([1.0 / n] * n, S, ann) * 100, 2),
+        "bounds": list(bounds),
+        "deploy": 1.0,
+        "window": {"from": days[0], "to": days[-1], "days": len(days),
+                   "obsPerYear": round(ann, 1),
+                   "years": round(len(days) / ann, 2)},
+        "backtest": backtest_board(keys, cols, days, ann, bounds),
+    }
+
 # ---------------------------------------------------------------- main build
 
 def build():
@@ -382,6 +724,50 @@ def build():
     log("fetching AMFI NAVs...\n")
     navs = fetch_amfi_navs()
     log("  matched %d funds\n" % len(navs))
+
+    # ---------------- multi asset sleeves, all converted to rupees
+    log("fetching growth sleeves...\n")
+    meta_by_id = {x["id"]: x for x in SLEEVES}
+    inr_series, sleeve_src = {}, {}
+    for sl in SLEEVES:
+        kind, arg = sl["src"]
+        try:
+            if kind == "mf":
+                h, code = fetch_first_nav(arg)
+                if not h:
+                    raise RuntimeError("no scheme code answered from %s" % (arg,))
+                inr_series[sl["id"]] = h
+                sleeve_src[sl["id"]] = "AMFI NAV via mfapi.in, scheme %s" % code
+            elif kind == "fred":
+                inr_series[sl["id"]] = to_inr(fetch_fred(arg), fx_hist)
+                sleeve_src[sl["id"]] = "FRED %s, converted to rupees" % arg
+            elif kind == "gold":
+                inr_series[sl["id"]] = to_inr({d: v / TROY_OZ_G for d, v in gold.items()}, fx_hist)
+                sleeve_src[sl["id"]] = "LBMA gold PM fix, rupees per gram"
+            elif kind == "btc":
+                inr_series[sl["id"]] = to_inr(fetch_btc_usd(), fx_hist)
+                sleeve_src[sl["id"]] = "blockchain.info market price, converted to rupees"
+            log("  %-10s %5d points\n" % (sl["id"], len(inr_series[sl["id"]])))
+        except Exception as e:                      # noqa: BLE001
+            sys.stderr.write("  sleeve %s unavailable: %s\n" % (sl["id"], e))
+
+    def board_if_possible(keys):
+        have = [k for k in keys if len(inr_series.get(k, {})) > 750]
+        if len(have) < 3:
+            sys.stderr.write("  too few sleeves for board %s\n" % keys)
+            return None
+        if have != keys:
+            sys.stderr.write("  board running without %s\n" % [k for k in keys if k not in have])
+        return build_multi_board(have, inr_series, meta_by_id)
+
+    growth = board_if_possible(GROWTH_KEYS)
+    offshore = board_if_possible(OFFSHORE_KEYS)
+    for nm, b in (("growth", growth), ("offshore", offshore)):
+        if b:
+            log("  %s: vol %.1f%%  %s\n" % (nm, b["portVol"],
+                "  ".join("%s %.0f%%" % (x["short"], x["weight"] * 100) for x in b["sleeves"])))
+        for k in (b or {}).get("keys", []):
+            b["sleeves"][b["keys"].index(k)]["source"] = sleeve_src.get(k, "")
 
     # ---------------- returns and volatility
     rg, rs = logret(g), logret(s)
@@ -503,6 +889,8 @@ def build():
             "park": round(1 - deploy, 4),
         },
         "indiaPremium": prem,
+        "growth": growth,
+        "offshore": offshore,
         "navs": navs,
         "spark": {"gold": spark(g), "silver": spark(s)},
         "constants": {"importDuty": IMPORT_DUTY, "gstBullion": GST_BULLION, "troyOzG": TROY_OZ_G},

@@ -6,7 +6,9 @@ updated: "27 August 2026",
 
 blurb: {
   signal: "Risk parity sets the neutral split, the gold silver ratio tilts it. Fully invested every month, no market timing.",
-  safe:   "Lowest variance route. Gold heavy because silver is twice as volatile, and it holds back part of the budget when metal volatility runs hot."
+  safe:   "Lowest variance route. Gold heavy because silver is twice as volatile, and it holds back part of the budget when metal volatility runs hot.",
+  growth: "The whole budget across six asset classes, every one of them an Indian mutual fund you can start today. No foreign account, no remittance, no extra tax form.",
+  offshore: "The same idea run through a real foreign brokerage account under the RBI's Liberalised Remittance Scheme, which is the only route here that can hold Bitcoin."
 },
 
 parking: { name: "any liquid or overnight fund on Groww", note: "roughly 6% a year, redeemable next day" },
@@ -94,11 +96,68 @@ instruments: [
     why:"3% GST plus a dealer premium, then a haircut when you sell it back. You also pay the Indian retail markup that fund buyers do not." }
 ],
 
+/* ---- multi asset sleeves ----------------------------------------------------
+   One fund per sleeve per route. Everything here is a MUTUAL FUND: an index fund, a
+   fund of funds, or a US listed ETF. No single stocks, no coins held directly.
+
+   ter is the ALL IN annual cost. For an Indian feeder or fund of funds that means its own
+   fee PLUS the underlying fund's, because you pay both, which is the same rule the gold
+   table uses. capRisk flags a fund that invests overseas and can therefore stop accepting
+   fresh money without notice, see notes.overseasCap.                                     */
+sleeveFunds: {
+  growth: {
+    nifty50:   { name:"UTI Nifty 50 Index Fund", venue:"Groww, direct plan", ter:0.0018, minSip:100,
+                 alt:"Navi Nifty 50 Index Fund is cheaper on paper at about 0.06%, but UTI's tracking difference has been smaller, and tracking difference is what you actually keep." },
+    midcap150: { name:"Motilal Oswal Nifty Midcap 150 Index Fund", venue:"Groww, direct plan", ter:0.0030, minSip:500,
+                 alt:"Nippon and ICICI run the same index at a similar cost if the 500 rupee minimum is awkward." },
+    sp500:     { name:"Motilal Oswal S&P 500 Index Fund", venue:"Groww, direct plan", ter:0.0058, minSip:500, capRisk:true,
+                 alt:"The only other honest route to the same index is Mirae's S&P 500 Top 50 fund, which holds 50 companies rather than 500 and is a more concentrated bet than it sounds." },
+    ndx100:    { name:"ICICI Prudential Nasdaq 100 Index Fund", venue:"Groww, direct plan", ter:0.0050, minSip:100, capRisk:true,
+                 alt:"Motilal's Nasdaq 100 fund of funds is the better known route but it feeds its own ETF, so all in it costs about 0.81% against this fund's single layer." },
+    emxi:      { name:"Kotak Global Emerging Market Fund", venue:"Groww, direct plan", ter:0.0160, minSip:100, capRisk:true, expensive:true,
+                 alt:"Every Indian route to emerging markets is a feeder into a foreign fund, so every one of them costs its own fee plus the underlying fund's. This is the cheapest of a bad set." },
+    gold:      { name:"Mirae Asset Gold ETF Fund of Fund", venue:"Groww, direct plan", ter:0.0045, minSip:99,
+                 alt:"Same fund the Signal and Safe boards pick, for the same reason: it is the cheapest gold route in India all in." }
+  },
+  offshore: {
+    sp500:  { name:"Vanguard S&P 500 ETF (VOO)", venue:"US brokerage", ter:0.0003, minSip:0,
+              alt:"SPY is more liquid and four times the cost. For buying and holding, liquidity is not what you are paying for." },
+    ndx100: { name:"Invesco Nasdaq 100 ETF (QQQM)", venue:"US brokerage", ter:0.0015, minSip:0,
+              alt:"QQQM is the buy and hold share class of QQQ: same index, 0.15% against 0.20%, thinner spreads only because fewer traders use it." },
+    emxi:   { name:"Vanguard FTSE Emerging Markets ETF (VWO)", venue:"US brokerage", ter:0.0007, minSip:0,
+              alt:"0.07% here against about 1.6% for the cheapest Indian feeder to the same asset class. This one sleeve is most of the case for the offshore route." },
+    gold:   { name:"iShares Gold Trust Micro (IAUM)", venue:"US brokerage", ter:0.0009, minSip:0,
+              alt:"GLD is the famous one at 0.40%. IAUM holds the same bullion for 0.09%." },
+    btc:    { name:"iShares Bitcoin Trust (IBIT)", venue:"US brokerage", ter:0.0025, minSip:0,
+              alt:"A spot Bitcoin ETF, so the coins sit with a regulated custodian and the position shows up in an ordinary brokerage statement. No exchange account, no wallet, no seed phrase to lose." }
+  }
+},
+
+/* ---- what the Liberalised Remittance Scheme actually costs -------------------
+   Verified against RBI's LRS rules and the Finance Act position as at the `updated` date.
+   The flat wire fee is the number that decides everything at this budget size: see
+   notes.lrsBatching, where sending 5,000 rupees a month costs about eight times as much
+   as sending the same year's money once.                                                  */
+lrs: {
+  annualCapUsd: 250000,      // RBI limit per person per financial year
+  tcsPct: 0.20,              // TCS on LRS remittances, on the amount ABOVE the threshold
+  tcsThreshold: 1000000,     // 10 lakh a financial year, raised from 7 lakh in the 2025 Budget
+  fxSpreadPct: 0.005,        // realistic all in FX markup at a discount broker. A bank is 1% to 2%.
+  wireFlat: 500,             // typical flat outward remittance charge, in rupees
+  dividendWithholding: 0.25, // US withholding for Indian residents under the DTAA, creditable in India
+  ltcgMonths: 24,            // foreign ETFs are not "equity" for Indian tax: 24 months for the 12.5% rate
+  scheduleFA: true
+},
+
 notes: {
   etfVsFof:
     "The break even depends almost entirely on how long you hold, not on how much you buy. Comparing the Mirae gold fund of funds at 0.45% against the Mirae gold ETF at 0.35% plus Groww's real charges, the ETF only becomes cheaper above a ticket of about 30,000 rupees if you hold one year, about 2,400 rupees at three years, about 1,400 at five, and about 700 at ten. The reason is Groww's 5 rupee minimum brokerage, which is a fixed cost that a small ticket cannot spread. So: holding for a year or two, use the fund of funds. Holding for many years and buying more than a couple of thousand at a time, the ETF wins. The fund of funds also buys fractional units, needs no demat account, can run a true daily SIP, and always transacts at NAV rather than at a market price that can sit above it. The ETF's one real edge beyond cost is tax, where long term treatment starts at 12 months instead of 24.",
+  overseasCap:
+    "Every Indian mutual fund that invests abroad shares one industry wide ceiling of about 7 billion dollars set by SEBI, and it has been full since February 2022. When it fills, funds stop taking fresh money: they suspend lumpsum purchases first and sometimes SIPs too, usually with a few days' notice. Nothing you already hold is affected and existing units stay redeemable, but a new SIP instalment can simply bounce. This is not a theoretical risk, it has happened repeatedly since 2022, and it applies to the S&P 500, Nasdaq 100 and emerging market sleeves on this board. If one of them is closed in the month you go to start, put that sleeve's share into the Nifty 50 or gold sleeve and add it later rather than leaving the money uninvested.",
+  lrsBatching:
+    "The offshore route has one flat cost that does not care how much you send: the outward remittance fee, roughly 500 rupees a wire. Send 5,000 rupees a month and you pay that twelve times, about 6,300 rupees a year on 60,000 remitted, which is over 10% gone before a single ETF is bought. Send the same year's money in one wire and it costs about 800 rupees, or 1.3%. The ETFs themselves cost 0.03% to 0.25% a year, so the remittance schedule is between forty and a hundred times more important than which fund you pick. The practical answer is to keep the monthly habit in rupees, park it in a liquid fund, and remit once or twice a year.",
   digitalGold:
-    "PhonePe gold charges 3% GST on the way in plus a buy sell spread it does not publish anywhere. Independent estimates put the round trip at 3% to 8%. On 3,000 rupees that is 90 to 240 rupees gone before the metal moves at all, against about 1 rupee 40 paise a month in a Mirae fund of funds. SEBI issued a public caution on digital gold in November 2025 and confirmed it regulates none of it. Use PhonePe for paying people, not for storing savings."
+    "PhonePe gold charges 3% GST on the way in plus a buy sell spread it does not publish anywhere. Independent estimates put the round trip at 3% to 8%. On 5,000 rupees that is 150 to 400 rupees gone before the metal moves at all, against about 2 rupees a month in a Mirae fund of funds. SEBI issued a public caution on digital gold in November 2025 and confirmed it regulates none of it. Use PhonePe for paying people, not for storing savings."
 },
 
 /* Copy shown under "Method and honest expectations". Written to be read by someone
@@ -113,6 +172,28 @@ method: {
       a: "<p>Not much, and you should size your expectations accordingly. I walked it forward over 219 overlapping ten year monthly SIPs: the tilt beat a fixed 67/33 split about 84% of the time, with a <b>median gain of roughly 1%</b> on the final value. That is one percent over a decade, not a year.</p><p>For scale, simply holding 100% gold instead of 67/33 beat it in about two thirds of those windows with a median of +3%. The tilt is a small, fairly reliable edge, not a reason to expect outperformance.</p>" },
     { q: "Why does it never stop buying?",
       a: "<p>Because trying to time entry is a worse bet than the tilt. Vanguard's research is often quoted as lump sum beating dollar cost averaging two thirds of the time, but that paper explicitly excludes recurring savers like you, and it is about deploying a windfall. For someone adding new money every month there is no lump sum to time. This board always deploys the full budget and only changes the split.</p>" }
+  ],
+  growth: [
+    { q: "What exactly does this board compute?",
+      a: "<p>One rule, applied to six asset classes: <b>equal risk contribution</b>. Weights are chosen so that every sleeve is responsible for the same share of the portfolio's variance. The risk share column proves it, they come out at one sixth each.</p><p>With two assets that is a closed form, which is what the Signal board uses. With six it is not: it has to be solved numerically, by cyclical coordinate descent on the convex log barrier problem (Spinu 2013). So this is the one board here where an actual optimiser is doing actual work rather than a formula wearing a costume.</p><p>Two details that matter more than they look. Risk is measured <b>in rupees</b>, so the currency move on the US and emerging market sleeves counts as risk rather than a footnote, because rupees are what you spend. And the sleeves are lined up only on days when <b>every</b> market in the mix was actually open, so a holiday in one country never invents a zero return in another.</p>" },
+    { q: "Why does a board meant to be aggressive still hold gold?",
+      a: "<p>Because gold is the only thing in the set that is not correlated to the rest, and removing it makes the board worse on both counts at once. Its average correlation to the other sleeves is about 0.15, against roughly 0.35 for everything else.</p><p>I tested capping it, at 25%, 15%, 10%, and at zero. On the offshore board, removing gold entirely left the return almost unchanged while the worst drawdown went from about 19% to about 30%. On this board, cutting gold lowered the return and the drawdown moved the wrong way too. Capping it would have been a decision made for how the page looks rather than for what the numbers say, so it is uncapped.</p><p>The point of this board is that gold is <b>one sleeve of six</b> rather than the whole portfolio, which is what the other two boards are. That is the sense in which it is not limited to gold.</p>" },
+    { q: "Did you try to tilt toward whatever is going up?",
+      a: "<p>Yes, and it did not work, so it is not in the product.</p><p>I added a cross sectional momentum tilt, ranking the sleeves by their twelve month return excluding the most recent month, which is the standard construction, and shifting the risk budget toward the winners. Then I walked it forward with no lookahead at four tilt strengths.</p><p>On this board the tilt <b>hurt monotonically</b>: the harder it was applied, the worse the result. On the offshore board it helped very slightly on final value and made the drawdown worse. A signal whose sign flips between two overlapping universes is noise being read as a finding, and if I had shipped it you would have had a knob that looked scientific and did nothing. So the board has no tilt and no market timing at all. The only thing that changes month to month is the covariance matrix.</p>" },
+    { q: "What could go wrong here?",
+      a: "<p><b>The history is short.</b> This board can only be measured back to the point where all six sleeves existed, which is a few years, not a few decades. The metal boards run on 58 years of LBMA data. Treat every number on this page as one regime rather than as evidence, and note that the regime in question contained a historic run in both US technology and gold.</p><p><b>A single sleeve beat the mix.</b> Over the window tested, holding nothing but gold beat this six way split on final value, with roughly double the drawdown. That is the honest comparison and it is in the table above. Diversification bought a much smoother ride, not a bigger number.</p><p><b>The overseas funds can close.</b> Three of these six sleeves invest abroad and share one SEBI ceiling that has been full since 2022. A monthly instalment can bounce with a few days' notice. This is the most likely thing to actually interrupt you.</p><p><b>Emerging markets cost too much here.</b> Every Indian route to that asset class is a feeder into a foreign fund, so you pay both layers, roughly 1.6% a year against 0.07% for the same exposure on the offshore board. That single sleeve is most of the argument for going abroad.</p>" }
+  ],
+  offshore: [
+    { q: "What does it cost to actually send money abroad?",
+      a: "<p>Far more than the funds do, and the schedule matters more than the choice. The outward remittance fee is roughly 500 rupees and it does not care how much you send.</p><p>Send 5,000 rupees every month and that flat fee lands twelve times: about 6,300 rupees a year on 60,000 remitted, over <b>10% gone</b> before you buy a single ETF. Send the same year's money in one wire and it is about 800 rupees, or <b>1.3%</b>. The ETFs on this board cost between 0.03% and 0.25% a year, so the remittance schedule is somewhere between forty and a hundred times more consequential than which fund you pick.</p><p>So the instruction this board gives is deliberately not \"remit 5,000 today\". Keep the monthly habit in rupees, park it in a liquid fund, and remit once or twice a year in one go. This is the same lesson the gold table teaches about PhonePe: the wrapper costs more than the asset.</p>" },
+    { q: "Do I owe 20% TCS on this?",
+      a: "<p>Not at this size. TCS on money sent abroad under the Liberalised Remittance Scheme applies to the amount <b>above 10 lakh rupees</b> in a financial year, a threshold raised from 7 lakh in the 2025 Budget. At 5,000 rupees a month you are remitting 60,000 a year, so nothing is collected.</p><p>Worth knowing anyway: TCS is not a tax, it is a prepayment. Even if you did cross the threshold it is creditable against your income tax liability or refundable, so it is a cash flow cost rather than money lost. The RBI's overall LRS limit is 250,000 dollars per person per financial year, which is not a constraint you will meet here.</p>" },
+    { q: "What do I have to tell the tax department?",
+      a: "<p>This is the part people get wrong, and the penalty is out of all proportion to the sums involved.</p><p><b>Schedule FA is mandatory.</b> Once you hold a foreign asset you must disclose it in Schedule FA of your income tax return, every year, regardless of how small it is and regardless of whether you sold anything or made a rupee. It is not optional and it is not triggered by a threshold.</p><p>Non disclosure falls under the Black Money Act, where the penalty is <b>10 lakh rupees</b>, on a holding that might be worth 60,000. This is the single largest risk on this board and it has nothing to do with markets.</p><p>Two more: US dividends are withheld at 25% for Indian residents under the treaty, which you can claim as a foreign tax credit here. And a US ETF is not \"equity\" for Indian capital gains, so you need <b>24 months</b> for the 12.5% long term rate rather than the 12 months an Indian equity fund would need.</p>" },
+    { q: "Why is Bitcoin such a small slice if this is the aggressive board?",
+      a: "<p>Because equal risk contribution sizes by risk, not by conviction, and Bitcoin's volatility is roughly three times anything else in the mix. To contribute the same share of portfolio variance as the S&P 500 sleeve it has to be about a third of the size. That is the method working, not the method being timid.</p><p>The backtest is blunt about the trade. Over the window tested, holding nothing but Bitcoin returned far more than this board did, with a drawdown near 70%. Holding it at an equal risk weight gave up most of that upside and cut the worst fall to roughly a quarter of it. Both facts are in the table; which one matters to you is not something a dashboard can decide.</p><p>It is held through a spot Bitcoin ETF, so the coins sit with a regulated custodian and appear on an ordinary brokerage statement. There is no Indian mutual fund route to this, which is the only reason this board exists separately from the other one. Note that Indian tax on the ETF follows the foreign asset rules above, not the 30% flat rate that applies to buying crypto on an Indian exchange.</p>" },
+    { q: "What could go wrong here?",
+      a: "<p><b>Everything from the other board, plus a currency and a bureaucracy.</b> The short history caveat, the single regime caveat and the \"one sleeve beat the mix\" caveat all apply here too and are all in the table above.</p><p><b>The rupee cuts both ways.</b> Part of what looks like a return on this board is the rupee weakening, which has flattered every foreign asset an Indian investor has held for a decade. It is not a law of nature and it can reverse.</p><p><b>Money is slow to come back.</b> Repatriating takes days and costs another wire fee. This is not where an emergency fund goes.</p><p><b>The paperwork compounds.</b> Schedule FA every year, foreign tax credit forms if you claim the dividend withholding back, and a broker who may or may not still be operating in India in ten years. At 60,000 rupees a year, ask honestly whether that is worth it against the domestic board, which needs none of it and gives up mainly the emerging market cost and Bitcoin.</p>" }
   ],
   safe: [
     { q: "What does safest mean here, precisely?",

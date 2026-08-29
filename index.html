@@ -75,6 +75,10 @@ header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 8
 .tab[aria-selected="true"] .dot{background:var(--gold)}
 #tabSafe[aria-selected="true"]{border-bottom-color:var(--ok)}
 #tabSafe[aria-selected="true"] .dot{background:var(--ok)}
+#tabGrowth[aria-selected="true"]{border-bottom-color:var(--accent)}
+#tabGrowth[aria-selected="true"] .dot{background:var(--accent)}
+#tabOffshore[aria-selected="true"]{border-bottom-color:var(--bad)}
+#tabOffshore[aria-selected="true"] .dot{background:var(--bad)}
 .tabsub{font-size:12px;color:var(--tx3);margin:8px 0 0;font-weight:400}
 
 /* ---------- amount modes ---------- */
@@ -97,6 +101,8 @@ header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 8
 .headline::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;
   background:linear-gradient(90deg,var(--gold),var(--silver))}
 .headline.safe::before{background:linear-gradient(90deg,var(--ok),var(--silver))}
+.headline.growth::before{background:linear-gradient(90deg,var(--accent),var(--ok))}
+.headline.offshore::before{background:linear-gradient(90deg,var(--bad),var(--gold))}
 .hl-kicker{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:14px}
 .hl-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;font-size:22px;font-weight:650;
   line-height:1.4;letter-spacing:-.015em;margin-bottom:11px}
@@ -162,6 +168,18 @@ tr.avoid td{opacity:.55}
 .tag.ok{background:var(--ok);color:#fff}
 .tag.mid{background:var(--line2);color:var(--tx2)}
 
+/* ---------- sleeve colours, one per asset class ---------- */
+.sl-nifty50{--c:#e8b64c} .sl-midcap150{--c:#d9884c} .sl-sp500{--c:#6ea8fe}
+.sl-ndx100{--c:#9d7bea} .sl-emxi{--c:#4fbfa8} .sl-gold{--c:#c9962f} .sl-btc{--c:#f0803c}
+.bar div.sleeve{background:var(--c)}
+.legend i.sleeve{background:var(--c)}
+
+/* ---------- correlation matrix ---------- */
+table.mx{min-width:520px}
+table.mx td{text-align:center;padding:7px 4px}
+table.mx td.v{border-radius:5px;font-weight:600}
+table.mx th.rot{font-size:10px}
+
 /* ---------- misc ---------- */
 .pill{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--line);
   border-radius:999px;padding:3px 10px;font-size:11.5px;color:var(--tx2);font-weight:600}
@@ -217,12 +235,14 @@ footer{margin-top:44px;padding:22px 0;border-top:1px solid var(--line);color:var
  <div class="tabs" role="tablist">
   <button class="tab" id="tabSignal" role="tab" aria-selected="true"><span class="dot"></span>Signal</button>
   <button class="tab" id="tabSafe" role="tab" aria-selected="false"><span class="dot"></span>Safe</button>
+  <button class="tab" id="tabGrowth" role="tab" aria-selected="false"><span class="dot"></span>Growth</button>
+  <button class="tab" id="tabOffshore" role="tab" aria-selected="false"><span class="dot"></span>Offshore</button>
  </div>
  <p class="tabsub" id="tabsub"></p>
 
  <div class="modes" role="group" aria-label="Amount">
-  <button class="mode" id="mMonth" aria-pressed="true">&#8377;3,000 per month</button>
-  <button class="mode" id="mDay" aria-pressed="false">&#8377;100 per day</button>
+  <button class="mode" id="mMonth" aria-pressed="true">&#8377;5,000 per month</button>
+  <button class="mode" id="mDay" aria-pressed="false">&#8377;167 per day</button>
   <div class="custom">
    <input id="amt" type="number" min="100" step="100" placeholder="Amount" aria-label="Custom amount" value="5000">
    <button id="amtGo">Report</button>
@@ -236,16 +256,53 @@ footer{margin-top:44px;padding:22px 0;border-top:1px solid var(--line);color:var
    <h3>This month's split</h3>
    <div class="bar" id="splitbar"></div>
    <div class="legend" id="splitlegend"></div>
-   <div class="gauge"><div class="mid"></div><div class="pin" id="pin"></div></div>
-   <div class="gaugelab"><span>All gold</span><span>Neutral</span><span>More silver</span></div>
+   <div id="gaugewrap">
+    <div class="gauge"><div class="mid"></div><div class="pin" id="pin"></div></div>
+    <div class="gaugelab"><span>All gold</span><span>Neutral</span><span>More silver</span></div>
+   </div>
    <div id="whytext" class="note"></div>
   </div>
   <div class="card">
-   <h3>What drove it</h3>
+   <h3 id="driversTitle">What drove it</h3>
    <div id="drivers"></div>
   </div>
  </div>
 
+ <div id="multiOnly" hidden>
+  <section class="sec">
+   <h2>The mix, and the fund for each piece</h2>
+   <p class="lede" id="sleevelede"></p>
+   <div class="card">
+    <div class="tblwrap"><table id="sleevetbl"></table></div>
+    <div id="sleevenote"></div>
+   </div>
+  </section>
+
+  <section class="sec">
+   <h2>How the sleeves move together</h2>
+   <p class="lede">Correlation of daily rupee returns over the window every sleeve shares. This is the input that decides the weights, so it is worth seeing rather than trusting.</p>
+   <div class="card">
+    <div class="tblwrap"><table class="mx" id="corrtbl"></table></div>
+    <div id="corrnote"></div>
+   </div>
+  </section>
+
+  <section class="sec">
+   <h2>What this actually did, walked forward</h2>
+   <p class="lede" id="btlede"></p>
+   <div class="card">
+    <div class="tblwrap"><table id="bttbl"></table></div>
+    <div id="btnote"></div>
+   </div>
+  </section>
+
+  <section class="sec">
+   <h2 id="routeTitle">The route, and what it really costs</h2>
+   <div class="grid g2" id="routecards"></div>
+  </section>
+ </div>
+
+ <div id="metalOnly">
  <section class="sec">
   <h2>Where to buy it</h2>
   <p class="lede" id="instlede"></p>
@@ -265,6 +322,7 @@ footer{margin-top:44px;padding:22px 0;border-top:1px solid var(--line);color:var
   <h2>Price context</h2>
   <div class="grid g2" id="pricecards"></div>
  </section>
+ </div>
 
  <section class="sec">
   <h2>Method and honest expectations</h2>
