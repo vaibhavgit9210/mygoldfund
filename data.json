@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-09-03T07:19:17+00:00",
- "generatedIst": "03 Sep 2026, 12:49 IST",
+ "generatedAt": "2026-09-03T12:56:23+00:00",
+ "generatedIst": "03 Sep 2026, 18:26 IST",
  "asOfFix": "2026-09-02",
  "history": {
   "from": "1968-04-01",
@@ -13,11 +13,11 @@
  },
  "gold": {
   "usdOz": 4382.25,
-  "liveUsdOz": 4424.6,
+  "liveUsdOz": 4492.7,
   "inr": {
-   "parity": 13509.88,
-   "withDuty": 15536.36,
-   "withGst": 16002.45
+   "parity": 13717.81,
+   "withDuty": 15775.49,
+   "withGst": 16248.75
   },
   "last": 4382.25,
   "sma50": 4215.69,
@@ -35,11 +35,11 @@
  },
  "silver": {
   "usdOz": 63.695,
-  "liveUsdOz": 65.998,
+  "liveUsdOz": 66.794,
   "inr": {
-   "parity": 201.52,
-   "withDuty": 231.74,
-   "withGst": 238.7
+   "parity": 203.95,
+   "withDuty": 234.54,
+   "withGst": 241.57
   },
   "last": 63.695,
   "sma50": 61.43,
@@ -57,7 +57,7 @@
  },
  "gsr": {
   "value": 68.801,
-  "liveValue": 67.041,
+  "liveValue": 67.262,
   "windowYears": 30,
   "percentile": 0.5423,
   "robustZ": 0.126,
