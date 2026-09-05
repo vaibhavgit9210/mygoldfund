@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-09-05T07:03:50+00:00",
- "generatedIst": "05 Sep 2026, 12:33 IST",
+ "generatedAt": "2026-09-05T11:55:00+00:00",
+ "generatedIst": "05 Sep 2026, 17:25 IST",
  "asOfFix": "2026-09-04",
  "history": {
   "from": "1968-04-01",
@@ -1684,9 +1684,9 @@
    "date": "04-Sep-2026"
   },
   "ANGEL ONE GOLD ETF": {
-   "nav": 14.2316,
+   "nav": 14.3447,
    "cat": "gold_etf",
-   "date": "03-Sep-2026"
+   "date": "04-Sep-2026"
   },
   "Choice Gold ETF": {
    "nav": 152.4689,
@@ -1754,9 +1754,9 @@
    "date": "04-Sep-2026"
   },
   "ANGEL ONE SILVER ETF": {
-   "nav": 8.7969,
+   "nav": 8.9153,
    "cat": "silver_etf",
-   "date": "03-Sep-2026"
+   "date": "04-Sep-2026"
   },
   "Edelweiss Silver ETF": {
    "nav": 233.0196,
