@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-09-14T08:02:40+00:00",
- "generatedIst": "14 Sep 2026, 13:32 IST",
+ "generatedAt": "2026-09-14T15:10:11+00:00",
+ "generatedIst": "14 Sep 2026, 20:40 IST",
  "asOfFix": "2026-09-11",
  "history": {
   "from": "1968-04-01",
@@ -8,16 +8,16 @@
  },
  "fx": {
   "usdinr": 95.56,
-  "date": "2026-09-11",
+  "date": "2026-09-14",
   "source": "frankfurter.dev (ECB)"
  },
  "gold": {
   "usdOz": 4386.25,
-  "liveUsdOz": 4314.7,
+  "liveUsdOz": 4283.2,
   "inr": {
-   "parity": 13256.16,
-   "withDuty": 15244.59,
-   "withGst": 15701.92
+   "parity": 13159.38,
+   "withDuty": 15133.29,
+   "withGst": 15587.29
   },
   "last": 4386.25,
   "sma50": 4265.31,
@@ -35,11 +35,11 @@
  },
  "silver": {
   "usdOz": 63.84,
-  "liveUsdOz": 63.405,
+  "liveUsdOz": 63.267,
   "inr": {
-   "parity": 194.8,
-   "withDuty": 224.02,
-   "withGst": 230.74
+   "parity": 194.38,
+   "withDuty": 223.53,
+   "withGst": 230.24
   },
   "last": 63.84,
   "sma50": 62.41,
@@ -57,7 +57,7 @@
  },
  "gsr": {
   "value": 68.707,
-  "liveValue": 68.05,
+  "liveValue": 67.7,
   "windowYears": 30,
   "percentile": 0.5415,
   "robustZ": 0.121,
