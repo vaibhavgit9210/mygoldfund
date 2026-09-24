@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-09-24T07:46:40+00:00",
- "generatedIst": "24 Sep 2026, 13:16 IST",
+ "generatedAt": "2026-09-24T13:46:01+00:00",
+ "generatedIst": "24 Sep 2026, 19:16 IST",
  "asOfFix": "2026-09-23",
  "history": {
   "from": "1968-04-01",
@@ -13,11 +13,11 @@
  },
  "gold": {
   "usdOz": 4284.45,
-  "liveUsdOz": 4282.8,
+  "liveUsdOz": 4270.8,
   "inr": {
-   "parity": 13182.94,
-   "withDuty": 15160.38,
-   "withGst": 15615.19
+   "parity": 13146.0,
+   "withDuty": 15117.9,
+   "withGst": 15571.44
   },
   "last": 4284.45,
   "sma50": 4298.8,
@@ -35,11 +35,11 @@
  },
  "silver": {
   "usdOz": 65.185,
-  "liveUsdOz": 64.358,
+  "liveUsdOz": 63.453,
   "inr": {
-   "parity": 198.1,
-   "withDuty": 227.82,
-   "withGst": 234.65
+   "parity": 195.32,
+   "withDuty": 224.61,
+   "withGst": 231.35
   },
   "last": 65.185,
   "sma50": 63.22,
@@ -57,7 +57,7 @@
  },
  "gsr": {
   "value": 65.728,
-  "liveValue": 66.547,
+  "liveValue": 67.307,
   "windowYears": 30,
   "percentile": 0.4649,
   "robustZ": -0.08,
@@ -936,19 +936,11 @@
  },
  "indiaPremium": {
   "gold": {
-   "premium": -3.42,
-   "percentile": 0.2336,
-   "avg90": -4.03,
-   "spread": 1.8,
+   "premium": -2.52,
+   "percentile": 0.2585,
+   "avg90": -3.16,
+   "spread": 0.0,
    "sources": [
-    {
-     "source": "GOLDBEES",
-     "premium": -4.32,
-     "percentile": 0.2086,
-     "avg90": -4.9,
-     "days": 2350,
-     "from": "2016-11-07"
-    },
     {
      "source": "ICICI Gold ETF",
      "premium": -2.52,
