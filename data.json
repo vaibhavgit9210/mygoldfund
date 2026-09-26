@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-09-26T07:56:21+00:00",
- "generatedIst": "26 Sep 2026, 13:26 IST",
+ "generatedAt": "2026-09-26T13:17:44+00:00",
+ "generatedIst": "26 Sep 2026, 18:47 IST",
  "asOfFix": "2026-09-25",
  "history": {
   "from": "1968-04-01",
@@ -999,15 +999,15 @@
     "name": "India large cap",
     "short": "Nifty 50",
     "what": "The Nifty 50, through an index fund. Measured off UTI's direct plan NAV.",
-    "weight": 0.1916,
+    "weight": 0.1907,
     "riskShare": 0.1667,
-    "vol": 14.36,
-    "volEwma": 10.15,
+    "vol": 14.28,
+    "volEwma": 9.92,
     "volLong": 17.59,
-    "avgCorr": 0.352,
-    "ret1y": -7.54,
-    "mom12_1": -1.16,
-    "ddFromHigh": -11.7,
+    "avgCorr": 0.351,
+    "ret1y": -6.81,
+    "mom12_1": -0.79,
+    "ddFromHigh": -11.4,
     "source": "AMFI NAV via mfapi.in, scheme 120716"
    },
    {
@@ -1015,15 +1015,15 @@
     "name": "India midcap",
     "short": "Nifty Midcap 150",
     "what": "The Nifty Midcap 150. Higher beta than the Nifty and the usual way an Indian portfolio reaches for growth at home.",
-    "weight": 0.176,
+    "weight": 0.1759,
     "riskShare": 0.1667,
-    "vol": 15.97,
-    "volEwma": 13.14,
-    "volLong": 18.37,
+    "vol": 15.81,
+    "volEwma": 12.76,
+    "volLong": 18.36,
     "avgCorr": 0.337,
-    "ret1y": 3.11,
-    "mom12_1": 11.03,
-    "ddFromHigh": -4.59,
+    "ret1y": 3.87,
+    "mom12_1": 12.27,
+    "ddFromHigh": -4.73,
     "source": "AMFI NAV via mfapi.in, scheme 147621"
    },
    {
@@ -1031,15 +1031,15 @@
     "name": "US large cap",
     "short": "S&P 500",
     "what": "The S&P 500, converted to rupees. The single most widely held equity index on earth.",
-    "weight": 0.1703,
+    "weight": 0.1695,
     "riskShare": 0.1667,
-    "vol": 15.68,
-    "volEwma": 11.16,
+    "vol": 15.59,
+    "volEwma": 10.91,
     "volLong": 19.16,
     "avgCorr": 0.371,
-    "ret1y": 25.1,
-    "mom12_1": 29.28,
-    "ddFromHigh": -0.68,
+    "ret1y": 26.02,
+    "mom12_1": 29.73,
+    "ddFromHigh": -0.32,
     "source": "FRED SP500, converted to rupees"
    },
    {
@@ -1047,15 +1047,15 @@
     "name": "US tech",
     "short": "Nasdaq 100",
     "what": "The Nasdaq 100, converted to rupees. Concentrated in a handful of very large technology companies.",
-    "weight": 0.1297,
+    "weight": 0.1296,
     "riskShare": 0.1667,
-    "vol": 21.33,
-    "volEwma": 18.13,
-    "volLong": 24.12,
+    "vol": 21.11,
+    "volEwma": 17.61,
+    "volLong": 24.11,
     "avgCorr": 0.35,
-    "ret1y": 34.04,
-    "mom12_1": 35.28,
-    "ddFromHigh": -0.44,
+    "ret1y": 34.94,
+    "mom12_1": 36.43,
+    "ddFromHigh": -0.16,
     "source": "FRED NASDAQ100, converted to rupees"
    },
    {
@@ -1063,15 +1063,15 @@
     "name": "Emerging ex India",
     "short": "EM ex India",
     "what": "China, Taiwan, Korea and Brazil, through an Indian feeder fund. Cheap on valuation for years, and still cheap.",
-    "weight": 0.137,
+    "weight": 0.1377,
     "riskShare": 0.1667,
-    "vol": 18.78,
-    "volEwma": 19.53,
+    "vol": 18.49,
+    "volEwma": 18.97,
     "volLong": 17.99,
     "avgCorr": 0.392,
-    "ret1y": 37.94,
-    "mom12_1": 47.68,
-    "ddFromHigh": -4.43,
+    "ret1y": 38.21,
+    "mom12_1": 49.18,
+    "ddFromHigh": -4.13,
     "source": "AMFI NAV via mfapi.in, scheme 119779"
    },
    {
@@ -1079,15 +1079,15 @@
     "name": "Gold",
     "short": "Gold",
     "what": "The same LBMA gold the other two boards are built on, in rupees per gram.",
-    "weight": 0.1954,
+    "weight": 0.1966,
     "riskShare": 0.1667,
-    "vol": 18.86,
-    "volEwma": 20.08,
+    "vol": 18.55,
+    "volEwma": 19.49,
     "volLong": 17.55,
     "avgCorr": 0.149,
-    "ret1y": 21.89,
-    "mom12_1": 49.8,
-    "ddFromHigh": -17.6,
+    "ret1y": 22.37,
+    "mom12_1": 46.28,
+    "ddFromHigh": -17.82,
     "source": "LBMA gold PM fix, rupees per gram"
    }
   ],
@@ -1106,7 +1106,7 @@
     0.22,
     0.178,
     0.428,
-    0.121
+    0.122
    ],
    [
     0.251,
@@ -1134,15 +1134,15 @@
    ],
    [
     0.109,
-    0.121,
+    0.122,
     0.148,
     0.148,
     0.219,
     1.0
    ]
   ],
-  "portVol": 11.22,
-  "equalWeightVol": 11.55,
+  "portVol": 11.11,
+  "equalWeightVol": 11.43,
   "bounds": [
    0.05,
    0.35
@@ -1150,48 +1150,48 @@
   "deploy": 1.0,
   "window": {
    "from": "2019-09-11",
-   "to": "2026-09-24",
-   "days": 1612,
-   "obsPerYear": 229.1,
+   "to": "2026-09-25",
+   "days": 1613,
+   "obsPerYear": 229.2,
    "years": 7.04
   },
   "backtest": {
    "sips": 60,
    "from": "2021-10-29",
-   "to": "2026-09-24",
+   "to": "2026-09-25",
    "invested": 300000,
    "monthly": 5000,
    "board": {
-    "multiple": 1.7373,
+    "multiple": 1.7386,
     "maxDrawdown": -9.6
    },
    "equal": {
-    "multiple": 1.7132,
+    "multiple": 1.7155,
     "maxDrawdown": -8.59
    },
    "solo": {
     "nifty50": {
-     "multiple": 1.1382,
+     "multiple": 1.142,
      "maxDrawdown": -12.66
     },
     "midcap150": {
-     "multiple": 1.4244,
+     "multiple": 1.4223,
      "maxDrawdown": -16.2
     },
     "sp500": {
-     "multiple": 1.758,
+     "multiple": 1.7644,
      "maxDrawdown": -16.58
     },
     "ndx100": {
-     "multiple": 2.0627,
+     "multiple": 2.0685,
      "maxDrawdown": -20.91
     },
     "emxi": {
-     "multiple": 1.7957,
+     "multiple": 1.8014,
      "maxDrawdown": -13.47
     },
     "gold": {
-     "multiple": 2.1004,
+     "multiple": 2.0947,
      "maxDrawdown": -21.0
     }
    },
@@ -1214,15 +1214,15 @@
     "name": "US large cap",
     "short": "S&P 500",
     "what": "The S&P 500, converted to rupees. The single most widely held equity index on earth.",
-    "weight": 0.2475,
+    "weight": 0.2459,
     "riskShare": 0.2,
-    "vol": 14.71,
-    "volEwma": 11.16,
+    "vol": 14.61,
+    "volEwma": 10.9,
     "volLong": 17.55,
     "avgCorr": 0.326,
-    "ret1y": 25.56,
-    "mom12_1": 29.28,
-    "ddFromHigh": -0.68,
+    "ret1y": 26.67,
+    "mom12_1": 29.73,
+    "ddFromHigh": -0.32,
     "source": "FRED SP500, converted to rupees"
    },
    {
@@ -1230,15 +1230,15 @@
     "name": "US tech",
     "short": "Nasdaq 100",
     "what": "The Nasdaq 100, converted to rupees. Concentrated in a handful of very large technology companies.",
-    "weight": 0.1807,
+    "weight": 0.1804,
     "riskShare": 0.2,
-    "vol": 20.3,
-    "volEwma": 18.12,
-    "volLong": 22.27,
+    "vol": 20.07,
+    "volEwma": 17.6,
+    "volLong": 22.26,
     "avgCorr": 0.323,
-    "ret1y": 34.57,
-    "mom12_1": 35.28,
-    "ddFromHigh": -0.44,
+    "ret1y": 35.54,
+    "mom12_1": 36.43,
+    "ddFromHigh": -0.16,
     "source": "FRED NASDAQ100, converted to rupees"
    },
    {
@@ -1246,15 +1246,15 @@
     "name": "Emerging ex India",
     "short": "EM ex India",
     "what": "China, Taiwan, Korea and Brazil, through an Indian feeder fund. Cheap on valuation for years, and still cheap.",
-    "weight": 0.2186,
+    "weight": 0.2195,
     "riskShare": 0.2,
-    "vol": 17.97,
-    "volEwma": 19.52,
-    "volLong": 16.28,
+    "vol": 17.67,
+    "volEwma": 18.97,
+    "volLong": 16.27,
     "avgCorr": 0.258,
-    "ret1y": 37.77,
-    "mom12_1": 47.68,
-    "ddFromHigh": -4.43,
+    "ret1y": 39.12,
+    "mom12_1": 49.18,
+    "ddFromHigh": -4.13,
     "source": "AMFI NAV via mfapi.in, scheme 119779"
    },
    {
@@ -1262,15 +1262,15 @@
     "name": "Gold",
     "short": "Gold",
     "what": "The same LBMA gold the other two boards are built on, in rupees per gram.",
-    "weight": 0.2621,
+    "weight": 0.2635,
     "riskShare": 0.2,
-    "vol": 18.14,
-    "volEwma": 20.07,
-    "volLong": 15.98,
+    "vol": 17.82,
+    "volEwma": 19.49,
+    "volLong": 15.97,
     "avgCorr": 0.118,
-    "ret1y": 22.7,
-    "mom12_1": 49.8,
-    "ddFromHigh": -17.6,
+    "ret1y": 23.4,
+    "mom12_1": 46.28,
+    "ddFromHigh": -17.82,
     "source": "LBMA gold PM fix, rupees per gram"
    },
    {
@@ -1278,15 +1278,15 @@
     "name": "Bitcoin",
     "short": "Bitcoin",
     "what": "Bitcoin, held through a US listed spot Bitcoin ETF. Offshore only: no Indian mutual fund may hold crypto.",
-    "weight": 0.0911,
+    "weight": 0.0907,
     "riskShare": 0.2,
-    "vol": 56.93,
-    "volEwma": 44.52,
-    "volLong": 67.09,
+    "vol": 56.4,
+    "volEwma": 43.17,
+    "volLong": 67.08,
     "avgCorr": 0.055,
-    "ret1y": -18.5,
-    "mom12_1": -22.36,
-    "ddFromHigh": -26.88,
+    "ret1y": -19.55,
+    "mom12_1": -22.5,
+    "ddFromHigh": -26.99,
     "source": "blockchain.info market price, converted to rupees"
    }
   ],
@@ -1327,8 +1327,8 @@
     1.0
    ]
   ],
-  "portVol": 12.58,
-  "equalWeightVol": 15.71,
+  "portVol": 12.41,
+  "equalWeightVol": 15.54,
   "bounds": [
    0.05,
    0.35
@@ -1336,44 +1336,44 @@
   "deploy": 1.0,
   "window": {
    "from": "2016-09-26",
-   "to": "2026-09-24",
-   "days": 2288,
+   "to": "2026-09-25",
+   "days": 2289,
    "obsPerYear": 229.0,
-   "years": 9.99
+   "years": 10.0
   },
   "backtest": {
    "sips": 94,
    "from": "2018-12-04",
-   "to": "2026-09-24",
+   "to": "2026-09-25",
    "invested": 470000,
    "monthly": 5000,
    "board": {
-    "multiple": 2.6316,
+    "multiple": 2.6333,
     "maxDrawdown": -18.72
    },
    "equal": {
-    "multiple": 3.1461,
+    "multiple": 3.1474,
     "maxDrawdown": -38.94
    },
    "solo": {
     "sp500": {
-     "multiple": 2.2721,
+     "multiple": 2.2804,
      "maxDrawdown": -25.68
     },
     "ndx100": {
-     "multiple": 2.8812,
+     "multiple": 2.8892,
      "maxDrawdown": -22.89
     },
     "emxi": {
-     "multiple": 2.008,
+     "multiple": 2.0144,
      "maxDrawdown": -25.4
     },
     "gold": {
-     "multiple": 2.6317,
+     "multiple": 2.6246,
      "maxDrawdown": -22.51
     },
     "btc": {
-     "multiple": 5.9375,
+     "multiple": 5.9285,
      "maxDrawdown": -71.73
     }
    },
