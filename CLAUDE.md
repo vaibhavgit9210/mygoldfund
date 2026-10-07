@@ -38,7 +38,15 @@ https://vaibhavkumar.is-a.dev/mygoldfund/ (Pages from `gh-pages`, so push BOTH `
   actually costs 0.87% because it feeds GOLDBEES at 0.81%. Always quote the all in number.
 - **Combined gold+silver FoFs must be excluded from single leg selection.** They hold both metals at a fixed
   internal split, so using one as the "silver leg" quietly buys gold twice. See `candidates()` in app.js.
-- Stooq is behind a JS proof of work challenge now, unusable. LBMA + FRED + frankfurter + mfapi all work keyless.
+- **LBMA blocks all scripted access since 30 Sep 2026** (Cloudflare WAF 403 "Sorry, you have been blocked",
+  from GitHub runners and home IPs alike, browser headers do not help). Metal history therefore lives in
+  `history/gold_usd.csv` + `silver_usd.csv` (column `source` = `lbma` or `spot`), committed by the Action.
+  Each run tries LBMA once, then extends from fawazahmed0 currency-api snapshots. **That snapshot dated D+1
+  is day D's close** (lag 1 correlates 0.68 with LBMA returns, lag 0 only 0.35). The archive has holes
+  (2025-12-09), so only a miss in the last 3 days stops the extension. Silver from 8 Apr 2025 is spot
+  (Wayback only had LBMA silver to 7 Apr 2025); cross checked against COMEX futures, median gap 0.15%.
+  `history.lbmaTo` in data.js drives the "Spot close" vs "LBMA fix" labels.
+- Stooq is behind a JS proof of work challenge now, unusable. FRED + frankfurter + mfapi all work keyless.
 - The analytics beacon's `setInterval` will hang headless Chrome unless you pass `--timeout`. It early returns
   on `file:`, so local screenshots are fine.
 
@@ -95,5 +103,5 @@ PhonePe digital gold costs 3-8% up front against ~0.45%/yr for the cheapest fund
 
 ## Backtest scratch
 
-Analysis scripts live in the session scratchpad, not the repo. If you need to redo them, the LBMA JSON
-(`prices.lbma.org.uk/json/gold_pm.json`, `silver.json`) goes back to 1968 and is the source of truth.
+Analysis scripts live in the session scratchpad, not the repo. If you need to redo them, `history/*.csv`
+goes back to 1968 (the LBMA JSON itself is no longer downloadable, see above).

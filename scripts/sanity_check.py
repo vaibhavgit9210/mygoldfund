@@ -64,7 +64,7 @@ for name in ("growth", "offshore"):
         need(bt["board"]["maxDrawdown"] <= 0, "%s backtest drawdown should be negative" % name)
 
 age = (datetime.date.today() - datetime.date.fromisoformat(d["asOfFix"])).days
-need(age <= 7, "LBMA fix is %d days stale (%s)" % (age, d["asOfFix"]))
+need(age <= 7, "latest metal price is %d days stale (%s)" % (age, d["asOfFix"]))
 
 if fails:
     for f in fails:

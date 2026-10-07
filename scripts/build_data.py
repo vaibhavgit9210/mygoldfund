@@ -198,7 +198,7 @@ def clamp(x, lo, hi):
 
 def fetch_lbma(name):
     url = "https://prices.lbma.org.uk/json/%s.json" % name
-    rows = jget(url)
+    rows = jget(url, timeout=30, tries=1)
     out = {}
     for r in rows:
         v = r.get("v") or []
@@ -210,6 +210,85 @@ def fetch_lbma(name):
             except (TypeError, ValueError):
                 pass
     return out
+
+# Since 30 Sep 2026 LBMA's Cloudflare firewall answers every scripted request with a 403
+# ("Sorry, you have been blocked"), from GitHub runners and home connections alike, whatever
+# the headers. So the history now lives in the repo (history/*.csv, LBMA fixings recovered
+# from the Wayback Machine) and each run tries LBMA first, then extends the file with daily
+# spot from the keyless fawazahmed0 currency-api. That spot sits within about 0.5% of the PM
+# fix. Its snapshot dated D+1 is the price at the END of day D (lag 1 correlates 0.68 with
+# LBMA daily returns, lag 0 only 0.35), so weekday D is filled from the D+1 snapshot.
+HIST_DIR = os.path.join(ROOT, "history")
+SPOT_URLS = ("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@%s/v1/currencies/usd.json",
+             "https://%s.currency-api.pages.dev/v1/currencies/usd.json")
+SPOT_MAX_DAYS = 600         # one run can close a gap this long (silver needed ~390 on first seed)
+
+def spot_snapshot(day):
+    """{xau, xag} in USD per ounce from the snapshot dated `day`, or None if not published yet."""
+    for u in SPOT_URLS:
+        try:
+            r = json.loads(urllib.request.urlopen(
+                urllib.request.Request(u % day, headers=UA), timeout=30).read())["usd"]
+            return {"gold": 1 / r["xau"], "silver": 1 / r["xag"]}
+        except Exception:                           # noqa: BLE001
+            continue
+    return None
+
+def load_history(metal):
+    out, src = {}, {}
+    path = os.path.join(HIST_DIR, "%s_usd.csv" % metal)
+    if os.path.exists(path):
+        with open(path) as f:
+            for row in csv.DictReader(f):
+                out[row["date"]] = float(row["usd_oz"])
+                src[row["date"]] = row["source"]
+    return out, src
+
+def save_history(metal, px, src):
+    os.makedirs(HIST_DIR, exist_ok=True)
+    with open(os.path.join(HIST_DIR, "%s_usd.csv" % metal), "w", newline="") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["date", "usd_oz", "source"])
+        for d in sorted(px):
+            w.writerow([d, ("%.4f" % px[d]).rstrip("0").rstrip("."), src[d]])
+
+def fetch_metals():
+    """Daily USD/oz for gold and silver: committed history, LBMA if it answers, then spot."""
+    hist = {m: load_history(m) for m in ("gold", "silver")}
+    for metal, name in (("gold", "gold_pm"), ("silver", "silver")):
+        try:
+            live = fetch_lbma(name)
+            px, src = hist[metal]
+            for d, p in live.items():
+                px[d], src[d] = p, "lbma"
+            sys.stderr.write("  LBMA %s answered, %d fixings\n" % (metal, len(live)))
+        except Exception as e:                      # noqa: BLE001
+            sys.stderr.write("  LBMA %s unavailable (%s), using history + spot\n" % (metal, e))
+
+    # Extend both metals from the earlier of their last dates, one snapshot per weekday.
+    last = min(max(hist[m][0]) for m in hist)
+    day = datetime.strptime(last, "%Y-%m-%d").date() + timedelta(days=1)
+    today = datetime.now(timezone.utc).date()
+    fetched = 0
+    while day < today and fetched < SPOT_MAX_DAYS:
+        if day.weekday() < 5:
+            snap = spot_snapshot((day + timedelta(days=1)).isoformat())
+            fetched += 1
+            if snap is None:
+                if (today - day).days <= 3:
+                    break                           # not published yet; next run picks it up
+                day += timedelta(days=1)            # the archive has the odd hole (2025-12-09)
+                continue
+            for m in hist:
+                px, src = hist[m]
+                if day.isoformat() not in px:
+                    px[day.isoformat()], src[day.isoformat()] = snap[m], "spot"
+        day += timedelta(days=1)
+    sys.stderr.write("  %d spot snapshots fetched\n" % fetched)
+
+    for m in hist:
+        save_history(m, *hist[m])
+    return hist
 
 def fetch_spot():
     """Live intraday spot. Nice to have; the LBMA fix is the source of truth for signals."""
@@ -696,11 +775,13 @@ def build_multi_board(keys, inr_series, meta_by_id, bounds=MULTI_BOUNDS):
 
 def build():
     log = sys.stderr.write
-    log("fetching LBMA gold...\n");   gold = fetch_lbma("gold_pm")
-    log("fetching LBMA silver...\n"); silver = fetch_lbma("silver")
+    log("loading metal history...\n")
+    metals = fetch_metals()
+    gold, silver = metals["gold"][0], metals["silver"][0]
     days = sorted(set(gold) & set(silver))
     if len(days) < 5000:
-        raise SystemExit("LBMA history too short (%d rows), refusing to build" % len(days))
+        raise SystemExit("metal history too short (%d rows), refusing to build" % len(days))
+    lbma_days = [d for d in days if metals["gold"][1][d] == "lbma" and metals["silver"][1][d] == "lbma"]
 
     g = [gold[d] for d in days]
     s = [silver[d] for d in days]
@@ -853,7 +934,7 @@ def build():
         "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "generatedIst": (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).strftime("%d %b %Y, %H:%M IST"),
         "asOfFix": days[-1],
-        "history": {"from": days[0], "days": len(days)},
+        "history": {"from": days[0], "days": len(days), "lbmaTo": lbma_days[-1]},
         "fx": {"usdinr": round(usdinr, 4), "date": fx_date, "source": fx_src},
         "gold": {"usdOz": round(g[-1], 2), "liveUsdOz": round(gold_live, 2), "inr": india(gold_live), **cg},
         "silver": {"usdOz": round(s[-1], 4), "liveUsdOz": round(silver_live, 4), "inr": india(silver_live), **cs},

@@ -28,6 +28,7 @@ Everything is keyless and public. No API keys, no accounts, no paid feeds.
 | Data | Source | Why this one |
 |---|---|---|
 | Gold and silver prices | [LBMA benchmark fixings](https://prices.lbma.org.uk/), daily since 1968 | The settlement price the global bullion market actually uses |
+| Gold and silver, after LBMA blocked us | `history/*.csv` in this repo, extended daily from the keyless [fawazahmed0 currency-api](https://github.com/fawazahmed0/exchange-api) spot snapshots | LBMA's firewall has 403'd every scripted request since 30 Sep 2026. The LBMA history (gold to 25 Sep 2026, silver to 7 Apr 2025, from the Wayback Machine) is frozen in the repo; spot sits within ~0.5% of the fix. If LBMA answers again it overwrites the spot rows |
 | USD/INR | ECB via `api.frankfurter.dev`, FRED `DEXINUS` as fallback | Official reference rates |
 | Live spot | `api.gold-api.com` | Intraday colour only, signals run off the LBMA fix |
 | Indian fund NAVs | AMFI `NAVAll.txt` | The official daily NAV file, 82 gold and silver schemes |

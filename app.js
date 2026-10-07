@@ -571,7 +571,7 @@ function renderDrivers() {
     h += driverRow("Portfolio volatility", pc(D.safe.portVol), "target " + pc(D.safe.volTarget));
     h += driverRow("Deploy this month", pc(D.safe.deploy * 100), "rest to a liquid fund");
   } else {
-    h += driverRow("Gold silver ratio", D.gsr.value.toFixed(2), "LBMA fix, " + D.asOfFix);
+    h += driverRow("Gold silver ratio", D.gsr.value.toFixed(2), fixLabel() + ", " + D.asOfFix);
     h += driverRow("Percentile", pc(D.gsr.percentile * 100), "within " + D.gsr.windowYears + " year window");
     h += driverRow("Robust z score", (D.gsr.robustZ >= 0 ? "+" : "") + D.gsr.robustZ.toFixed(2), "median and MAD, log scale");
     h += driverRow("Risk parity anchor", pc(D.signal.baseWeight * 100), "equal risk contribution");
@@ -623,10 +623,15 @@ function renderInstruments() {
 /* ---------------------------------------------------------------- indicators */
 function card(title, body) { return '<div class="card"><h3>' + title + "</h3>" + body + "</div>"; }
 
+// LBMA has blocked scripted downloads since 30 Sep 2026, so recent days are daily spot closes.
+function spliced() { return D.history.lbmaTo && D.asOfFix > D.history.lbmaTo; }
+function fixLabel() { return spliced() ? "Spot close" : "LBMA fix"; }
+
 function renderIndicators() {
   var g = D.gold, s = D.silver, el = document.getElementById("indicators");
   document.getElementById("histdesc").textContent =
-    D.history.days.toLocaleString("en-IN") + " trading days since " + D.history.from.slice(0, 4);
+    D.history.days.toLocaleString("en-IN") + " trading days since " + D.history.from.slice(0, 4) +
+    (spliced() ? " (LBMA fixes for both metals to " + D.history.lbmaTo + ", daily spot closes after, since LBMA now blocks automated downloads)" : "");
 
   var gsrBody =
     driverRow("Now", D.gsr.value.toFixed(2), "gold oz ÷ silver oz") +
@@ -690,7 +695,7 @@ function renderPrices() {
     } else {
       body = driverRow("Spot", usd(m.liveUsdOz), "per troy ounce") +
         driverRow("Per gram", usd(m.liveUsdOz / D.constants.troyOzG), "") +
-        driverRow("LBMA fix", usd(m.usdOz), D.asOfFix) +
+        driverRow(fixLabel(), usd(m.usdOz), D.asOfFix) +
         driverRow("200 day average", usd(m.sma200), sgn(m.vs200) + " away");
     }
     return card(label, body);
@@ -837,8 +842,9 @@ function renderAll() {
   else { renderInstruments(); renderIndicators(); renderPrices(); }
   renderMethod();
   document.getElementById("footmeta").innerHTML =
-    "Rebuilt " + esc(D.generatedIst) + " from LBMA benchmark fixings (" + esc(D.asOfFix) +
-    "), AMFI daily NAVs and ECB reference rates. Rules and charges last reviewed " + esc(I.updated) + ".";
+    "Rebuilt " + esc(D.generatedIst) + " from LBMA benchmark fixings" +
+    (spliced() ? " to " + esc(D.history.lbmaTo) + " and daily spot closes to " + esc(D.asOfFix) : " (" + esc(D.asOfFix) + ")") +
+    ", AMFI daily NAVs and ECB reference rates. Rules and charges last reviewed " + esc(I.updated) + ".";
 }
 
 /* ---------------------------------------------------------------- wire up */
