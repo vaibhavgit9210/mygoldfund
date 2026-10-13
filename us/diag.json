@@ -1,0 +1,71 @@
+{
+ "ranAt": "2026-10-13T08:49:37Z",
+ "tests": [
+  {
+   "name": "yahoo v8 urllib SPY",
+   "ok": true,
+   "detail": "251 bars, last 778.1",
+   "ms": 118
+  },
+  {
+   "name": "yahoo v8 urllib NVDA",
+   "ok": true,
+   "detail": "251 bars, last 226.32",
+   "ms": 109
+  },
+  {
+   "name": "yahoo v8 urllib TQQQ",
+   "ok": true,
+   "detail": "251 bars, last 79.61",
+   "ms": 92
+  },
+  {
+   "name": "yahoo v8 urllib ^VIX3M",
+   "ok": true,
+   "detail": "251 bars, last 17.93",
+   "ms": 70
+  },
+  {
+   "name": "yahoo v8 urllib QTUM",
+   "ok": true,
+   "detail": "251 bars, last 148.485",
+   "ms": 74
+  },
+  {
+   "name": "yahoo v8 1m prepost SPY",
+   "ok": true,
+   "detail": "43 bars",
+   "ms": 50
+  },
+  {
+   "name": "yahoo v7 quote crumb urllib",
+   "ok": true,
+   "detail": "crumb 11 chars, 5 quotes, SPY state PRE pre 778.365 post None reg 778.1",
+   "ms": 268
+  },
+  {
+   "name": "yahoo v8 via curl binary",
+   "ok": true,
+   "detail": "251 bars",
+   "ms": 94
+  },
+  {
+   "name": "cboe VIX3M csv",
+   "ok": true,
+   "detail": "218917 bytes",
+   "ms": 101
+  },
+  {
+   "name": "treasury bills csv",
+   "ok": true,
+   "detail": "16171 bytes",
+   "ms": 253
+  },
+  {
+   "name": "fred DTB3 custom UA",
+   "ok": true,
+   "detail": "3198 bytes",
+   "ms": 211
+  }
+ ]
+}
