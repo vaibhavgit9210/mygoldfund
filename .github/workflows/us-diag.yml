@@ -1,0 +1,69 @@
+name: us data diagnostic
+
+# One-off probe: does Yahoo Finance answer a stdlib urllib client from a GitHub-hosted
+# runner? Writes us/diag.json and commits it, so the result is readable without any auth.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/us-diag.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Probe sources
+        run: |
+          python3 - <<'PY'
+          import json, time, urllib.request, http.cookiejar, subprocess, sys
+          out = {"ranAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "tests": []}
+          def t(name, fn):
+              t0 = time.time()
+              try:
+                  r = fn(); out["tests"].append({"name": name, "ok": True, "detail": r, "ms": int((time.time()-t0)*1000)})
+              except Exception as e:
+                  out["tests"].append({"name": name, "ok": False, "detail": str(e)[:300], "ms": int((time.time()-t0)*1000)})
+              print(out["tests"][-1], flush=True)
+          UA = {"User-Agent": "Mozilla/5.0", "Accept": "*/*"}
+          def get(url, hdr=UA, timeout=30):
+              return urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=timeout).read()
+          for sym in ["SPY", "NVDA", "TQQQ", "^VIX3M", "QTUM"]:
+              t("yahoo v8 urllib " + sym, lambda s=sym: (lambda d: "%d bars, last %s" % (len(d["chart"]["result"][0]["timestamp"]), d["chart"]["result"][0]["meta"].get("regularMarketPrice")))(
+                  json.loads(get("https://query2.finance.yahoo.com/v8/finance/chart/%s?range=1y&interval=1d&events=div%%2Csplit" % urllib.request.quote(s)))))
+              time.sleep(0.5)
+          t("yahoo v8 1m prepost SPY", lambda: (lambda d: "%d bars" % len(d["chart"]["result"][0].get("timestamp", [])))(
+              json.loads(get("https://query2.finance.yahoo.com/v8/finance/chart/SPY?range=1d&interval=1m&includePrePost=true"))))
+          def crumb():
+              cj = http.cookiejar.CookieJar()
+              op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+              op.addheaders = list(UA.items())
+              try: op.open("https://fc.yahoo.com", timeout=30).read()
+              except urllib.error.HTTPError: pass
+              c = op.open("https://query2.finance.yahoo.com/v1/test/getcrumb", timeout=30).read().decode()
+              q = json.loads(op.open("https://query2.finance.yahoo.com/v7/finance/quote?symbols=SPY,NVDA,TQQQ,%5EVIX,%5EVIX3M&crumb=" + urllib.request.quote(c), timeout=30).read())
+              r = q["quoteResponse"]["result"]
+              return "crumb %d chars, %d quotes, SPY state %s pre %s post %s reg %s" % (len(c), len(r), r[0].get("marketState"), r[0].get("preMarketPrice"), r[0].get("postMarketPrice"), r[0].get("regularMarketPrice"))
+          t("yahoo v7 quote crumb urllib", crumb)
+          t("yahoo v8 via curl binary", lambda: (lambda d: "%d bars" % len(d["chart"]["result"][0]["timestamp"]))(
+              json.loads(subprocess.run(["curl", "-s", "-m", "30", "-A", "Mozilla/5.0", "https://query2.finance.yahoo.com/v8/finance/chart/AMD?range=1y&interval=1d"], capture_output=True, check=True).stdout)))
+          t("cboe VIX3M csv", lambda: "%d bytes" % len(get("https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX3M_History.csv")))
+          t("treasury bills csv", lambda: "%d bytes" % len(get("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_bill_rates&field_tdr_date_value=2026&page&_format=csv")))
+          t("fred DTB3 custom UA", lambda: "%d bytes" % len(get("https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTB3&cosd=2026-01-01", {"User-Agent": "curl/8.7.1", "Accept": "*/*"})))
+          json.dump(out, open("us/diag.json", "w"), indent=1)
+          PY
+      - name: Commit result
+        run: |
+          git config user.name "mygoldfund bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add us/diag.json
+          git commit -m "diag: us data probe $(date -u +%Y-%m-%dT%H:%M)" || echo "nothing"
+          git pull --rebase origin main
+          git push origin main
