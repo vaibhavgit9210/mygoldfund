@@ -23,7 +23,8 @@ jobs:
       - name: Probe sources
         run: |
           python3 - <<'PY'
-          import json, time, urllib.request, http.cookiejar, subprocess, sys
+          import json, time, os, urllib.request, urllib.error, http.cookiejar, subprocess, sys
+          os.makedirs('us', exist_ok=True)
           out = {"ranAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "tests": []}
           def t(name, fn):
               t0 = time.time()
