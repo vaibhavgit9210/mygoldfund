@@ -4,7 +4,7 @@
 (function () {
 "use strict";
 
-var D = window.MGF_DATA, I = window.MGF_INSTRUMENTS;
+var D = window.MGF_DATA, I = window.MGF_INSTRUMENTS, U = window.MGF_US || null;
 if (!D) { document.body.innerHTML = '<div class="wrap" style="padding:40px">data.js failed to load.</div>'; return; }
 
 /* ---------------------------------------------------------------- state */
@@ -13,8 +13,14 @@ var S = {
   cur:   localStorage.getItem("mgf.cur")   || "inr",
   mode:  localStorage.getItem("mgf.mode")  || "month",
   amt:   +(localStorage.getItem("mgf.amt") || 5000),
-  theme: localStorage.getItem("mgf.theme") || "dark"
+  theme: localStorage.getItem("mgf.theme") || "dark",
+  usEtf:   +(localStorage.getItem("mgf.usEtf")   || 30),
+  usStock: +(localStorage.getItem("mgf.usStock") || 20),
+  usSort: {key: "mom", dir: -1},
+  usDaily: null   /* long score history from the ledger Worker, once it answers */
 };
+var BOARDS = ["signal", "safe", "growth", "offshore", "us"];
+var LEDGER = "https://mygoldfund-ledger.vaibhavpro9210.workers.dev";
 var DAYS_PM = 30;          // for the daily cadence conversion
 var HORIZON = 3;           // years, the default holding assumption for cost comparisons
 var MONTHLY_BUDGET = 5000; // the default monthly amount the whole page is written around.
@@ -23,6 +29,9 @@ var MONTHLY_BUDGET = 5000; // the default monthly amount the whole page is writt
 /* The two metal boards and the two multi asset boards render different sections, because
    almost nothing on a gold page applies to a six sleeve global one. */
 function isMulti() { return S.board === "growth" || S.board === "offshore"; }
+/* The US board is dollars, two sleeves and a daily forecast ledger: none of the rupee
+   machinery applies, so it gets its own section and its own budget row. */
+function isUs() { return S.board === "us"; }
 function B() { return D[S.board] || null; }
 function sleeveFund(id) {
   var r = (I.sleeveFunds || {})[S.board] || {};
@@ -141,6 +150,7 @@ function pick(metal, amt, cadence) {
 
 /* ---------------------------------------------------------------- headline */
 function renderHeadline() {
+  if (isUs()) return renderHeadlineUs();
   if (isMulti()) return renderHeadlineMulti();
   var a = alloc(), el = document.getElementById("headline");
   el.className = "headline" + (S.board === "safe" ? " safe" : "");
@@ -773,6 +783,13 @@ function renderMethod() {
 /* ---------------------------------------------------------------- ticker + chrome */
 function renderTicker() {
   var t = document.getElementById("ticker");
+  if (isUs() && U) {
+    t.innerHTML =
+      '<div class="tk"><b class="num" style="color:var(--us)">' + usd(U.market.spy.close) + "</b><span>SPY</span></div>" +
+      '<div class="tk"><b class="num" style="color:var(--accent)">' + usd(U.market.qqq.close) + "</b><span>QQQ</span></div>" +
+      '<div class="tk"><b class="num">' + (+U.market.vix).toFixed(2) + "</b><span>VIX</span></div>";
+    return;
+  }
   var gsrLive = D.gsr.liveValue || D.gsr.value;
   t.innerHTML =
     '<div class="tk"><b class="num" style="color:var(--gold)">' + money(perGram("gold"), S.cur === "inr" ? 0 : 2) + "</b><span>gold / g</span></div>" +
@@ -809,11 +826,539 @@ function renderStaleness() {
     "</span></div>";
 }
 
+/* ================================================================ US board
+   Everything below reads window.MGF_US (us.js, written by scripts/us_build.py twice a trading
+   day). Fractions arrive as fractions and are formatted here. Nothing on this board touches
+   the rupee boards' state beyond the shared theme. */
+function pf(x, dp) { return x === null || x === undefined ? "n/a" : sgn(x * 100, dp === undefined ? 1 : dp); }
+function pu(x, dp) { return x === null || x === undefined ? "n/a" : pc(x * 100, dp === undefined ? 1 : dp); }
+function fmtDate(iso) {
+  if (!iso) return "";
+  var d = new Date(iso + "T00:00:00");
+  return isNaN(d) ? esc(iso) : d.toLocaleDateString("en-IN", {day: "numeric", month: "short", year: "numeric"});
+}
+function sessionLabel(s) { return s === "pre" ? "pre market" : "after the close"; }
+function toInr(dollars) { return inr(Math.round(dollars * D.fx.usdinr)); }
+function usdW(n) { return usd(n, 0); }
+function usTicker(sym) { return (U && U.tickers && U.tickers[sym]) || null; }
+
+/* Picks scale with the budget boxes, proportionally, with the largest line absorbing the
+   rounding so the lines still add up to what the sleeve deploys. */
+function scaledRec(sleeve) {
+  var rec = U.recs && U.recs[sleeve];
+  if (!rec) return null;
+  var budget = sleeve === "etf" ? S.usEtf : S.usStock;
+  var f = rec.budgetUsd > 0 ? budget / rec.budgetUsd : 1;
+  var picks = (rec.picks || []).map(function (p) {
+    var o = {}; for (var k in p) o[k] = p[k];
+    o.usd = Math.max(1, Math.round(p.usd * f));
+    return o;
+  });
+  /* The leveraged cap is a dollar figure, not a share of the sleeve: a bigger budget must not scale a 3x line past it. */
+  var cap = (U.constants && U.constants.levCapUsd) || 10;
+  picks.forEach(function (p) { if (p.lev > 1 && p.usd > cap) p.usd = cap; });
+  var want = Math.round(rec.deployUsd * f), have = picks.reduce(function (t, p) { return t + p.usd; }, 0);
+  if (picks.length && have !== want) {
+    var unlev = picks.filter(function (p) { return !(p.lev > 1); });
+    var big = (unlev.length ? unlev : picks).slice().sort(function (a, b) { return b.usd - a.usd; })[0];
+    big.usd = Math.max(1, big.usd + (want - have));
+  }
+  var deployed = picks.reduce(function (t, p) { return t + p.usd; }, 0);
+  return {rec: rec, budget: budget, picks: picks, deployed: deployed, held: Math.max(0, budget - deployed), f: f};
+}
+
+function usCostLine(deployedUsd) {
+  var c = U.costs, b = deployedUsd * c.brokerage, g = b * c.gst;
+  var lo = b + g + deployedUsd * c.fxBand[0], hi = b + g + deployedUsd * c.fxBand[1];
+  return {lo: lo, hi: hi, pctLo: deployedUsd ? lo / deployedUsd : 0, pctHi: deployedUsd ? hi / deployedUsd : 0};
+}
+
+function renderHeadlineUs() {
+  var el = document.getElementById("headline");
+  el.className = "headline us";
+  if (!U) {
+    el.innerHTML = '<div class="hl-kicker">US board</div><div class="hl-line"><span>US panel not built yet.</span></div>' +
+      '<div class="hl-alt">The first run of <code>scripts/us_build.py</code> writes <code>us.js</code>, and this board renders from it. Until then the other four boards are unaffected.</div>';
+    return;
+  }
+  var h = '<div class="hl-kicker">US board, high risk high reward, ' + fmtDate(U.date) + ", " + sessionLabel(U.session) + "</div>";
+  var N = U.dayNumber, G = U.gateDays || 7;
+
+  if (N <= G) {
+    h += '<div class="hl-line"><span>Day</span><span class="hl-amt" style="color:var(--us)">' + N + " of " + G +
+      '</span><span class="hl-in">recording and predicting only</span></div>';
+    var strip = "";
+    for (var i = 0; i < G; i++) strip += "<i" + (i < N ? ' class="on"' : "") + "></i>";
+    h += '<div class="days" aria-label="Day ' + N + ' of ' + G + '">' + strip + "</div>";
+    h += '<div class="hl-alt">Every forecast is being recorded and scored, and the recommendation engine is running in the shadows ' +
+      "so the paper track record starts on day one. From day " + (G + 1) + " the order lines appear here, provided the data integrity checks pass. " +
+      "Nothing is buyable until then.</div>";
+    h += '<div class="hl-note"><span>&#8226;</span><span>' + esc(U.notes.sevenDays) + "</span></div>";
+    el.innerHTML = h; return;
+  }
+
+  if (!U.gateOpen) {
+    h += '<div class="hl-line"><span>Day ' + N + '</span><span class="hl-in">recommendations are gated</span></div>';
+    h += '<div class="hl-alt" style="color:var(--warn)"><b style="color:var(--warn)">Not buyable today.</b> The data integrity check failed:' +
+      '<ul style="margin:6px 0 0;padding-left:18px">' + (U.gateReasons || []).map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>" +
+      (U.recs && U.recs.etf && U.recs.etf.picks && U.recs.etf.picks.length
+        ? "The last recommendation is still shown below with a data degraded banner, for reference, not for action." : "") + "</div>";
+    h += '<div class="hl-note"><span>&#8226;</span><span>' + esc(U.notes.sevenDays) + "</span></div>";
+    el.innerHTML = h; return;
+  }
+
+  var totalDeployed = 0, totalHeld = 0;
+  ["etf", "stock"].forEach(function (sl) {
+    var r = scaledRec(sl);
+    if (!r) return;
+    h += '<div class="hl-sub">' + (sl === "etf" ? "ETF sleeve" : "Stock sleeve") + ", " + usdW(r.budget) + " a month</div>";
+    if (!r.picks.length) h += '<div class="hl-line hl-c"><span>Hold</span><span class="hl-amt">' + usdW(r.budget) + '</span><span class="hl-in">nothing qualified this month</span></div>';
+    r.picks.forEach(function (p) {
+      h += '<div class="hl-line hl-u"><span>Buy</span><span class="hl-amt">' + usdW(p.usd) + "</span>" +
+        '<span class="hl-in">of</span><span class="hl-fund">' + esc(p.sym) + "</span>" +
+        '<span class="hl-in">' + esc(p.name || "") + (p.lev > 1 ? ' <span class="tag us">' + p.lev + "x</span>" : "") +
+        ((p.flags || []).indexOf("cryptoAdjacent") >= 0 ? ' <span class="tag cfm">confirm in app</span>' : "") +
+        ", about " + toInr(p.usd) + "</span></div>";
+    });
+    totalDeployed += r.deployed;
+    /* a sleeve with no picks already printed its own hold line, so it must not be counted again below */
+    if (r.picks.length) totalHeld += r.held;
+  });
+  if (totalHeld > 0) {
+    var fr = U.recs.etf ? U.recs.etf.deployFrac : 1;
+    h += '<div class="hl-line hl-c" style="margin-top:12px"><span>Hold</span><span class="hl-amt">' + usdW(totalHeld) + "</span>" +
+      '<span class="hl-in">this month in the INDmoney cash balance' + (fr < 1 ? ", regime deploys " + pu(fr, 0) + " only" : ", the vol target did not need it") +
+      ", it rolls into next month</span></div>";
+  }
+  var c = usCostLine(totalDeployed);
+  h += '<div class="hl-alt">Costs on these orders: <b>' + usd(c.lo) + " to " + usd(c.hi) + "</b> (" + pu(c.pctLo, 2) + " to " + pu(c.pctHi, 2) +
+    "), brokerage " + pu(U.costs.brokerage, 2) + " plus " + pu(U.costs.gst, 0) + " GST on it and a " + pu(U.costs.fxBand[0], 1) + " to " +
+    pu(U.costs.fxBand[1], 1) + " FX markup. Fund the account once a month so the markup is paid once. Issued " + fmtDate(U.recs.etf ? U.recs.etf.date : U.date) +
+    ", regime <b>" + esc(U.recs.etf ? U.recs.etf.regime : U.market.regime.label) + "</b>, next issue " + fmtDate(U.recs.nextIssue) + ".</div>";
+  h += '<div class="hl-note"><span>&#8226;</span><span>' + esc(U.notes.sevenDays) + "</span></div>";
+  el.innerHTML = h;
+}
+
+function renderUsBudget() {
+  document.getElementById("usEtf").value = S.usEtf;
+  document.getElementById("usStock").value = S.usStock;
+  document.getElementById("usFx").textContent = usdW(S.usEtf + S.usStock) + " a month is about " + toInr(S.usEtf + S.usStock) +
+    " at " + D.fx.usdinr.toFixed(2) + " to the dollar.";
+}
+
+function renderUsReadings() {
+  var m = U.market, el = document.getElementById("usReadings");
+  document.getElementById("usReadTitle").textContent = U.session === "pre" ? "This morning's readings" : "Today's readings";
+  function px(sym, mk) {
+    var t = usTicker(sym);
+    var pre = U.session === "pre" && t && t.price.pre !== null;
+    return driverRow(sym, usd(pre ? t.price.pre : mk.close), (pre ? "pre market, " : "close, ") + pf(mk.ret1d) + " on the day, " +
+      (mk.above200 ? "above" : "below") + " the 200 day");
+  }
+  var h = px("SPY", m.spy) + px("QQQ", m.qqq);
+  h += driverRow("VIX", (+m.vix).toFixed(2), "VIX3M " + (+m.vix3m).toFixed(2) + ", VIX9D " + (+m.vix9d).toFixed(2));
+  h += driverRow("VIX / VIX3M", (+m.vixRatio).toFixed(3), m.backwardation ? "backwardation, risk off" : "contango, normal");
+  h += driverRow("13 week bill", pu(m.tbill, 2), "recorded daily as the risk free rate, display only, no rule uses it");
+  h += driverRow("Regime", esc(m.regime.label), "SPY vol at the " + pu(m.regime.volPct, 0) + " percentile of 500 days");
+  h += driverRow("HMM p(high vol)", pu(m.hmm.pHigh, 0), "display only, never used for sizing, fit " + fmtDate(m.hmm.fitDate));
+  var last = (U.runs || [])[U.runs.length - 1];
+  if (last) h += driverRow("Last run", esc(last.session) + " " + fmtDate(last.date),
+    (last.degraded ? "degraded, " : "clean, ") + (last.lateMin ? last.lateMin + " min late" : "on time"));
+  el.innerHTML = h;
+}
+
+function wbar(name, w, label) {
+  return '<div class="wrow"><span class="wk">' + esc(label || name) + '</span><span class="wb"><i style="width:' +
+    Math.max(0, Math.min(100, w * 100)).toFixed(1) + '%"></i></span><span class="wv">' + pu(w, 0) + "</span></div>";
+}
+var EXPERT_LABEL = {rw_drift: "RW + drift", gjr_zero: "GJR GARCH", har_dens: "HAR RV", trend_regime: "trend regime", hmm_mix: "HMM mix",
+                    ewma: "EWMA", gjr: "GJR GARCH", har: "HAR RV", combo: "combo"};
+function renderUsWeights() {
+  var W = U.weights, el = document.getElementById("usWeights"), h = "";
+  h += '<div class="hl-sub" style="margin-top:0">Density experts, Hedge on CRPS</div>';
+  Object.keys(W.density || {}).forEach(function (k) { h += wbar(k, W.density[k], EXPERT_LABEL[k] || k); });
+  h += '<div class="hl-sub">Variance experts, Hedge on QLIKE</div>';
+  Object.keys(W.variance || {}).forEach(function (k) { h += wbar(k, W.variance[k], EXPERT_LABEL[k] || k); });
+  h += '<div class="note" style="margin-top:12px">Weights are shrunk toward equal by min(0.5, t/250) with t = ' + (+W.t) +
+    " scored days, so for the first year the engine trusts no expert much more than the others. That is deliberate: a week of data " +
+    "cannot tell five models apart.</div>";
+  el.innerHTML = h;
+}
+
+/* ---- predictions table */
+var PRED_COLS = [
+  {key: "sym",   label: "Ticker",   left: true},
+  {key: "sleeve", label: "Sleeve"},
+  {key: "price", label: "Last"},
+  {key: "d1",    label: "1d"},
+  {key: "mom",   label: "12-1 mom"},
+  {key: "vol",   label: "Vol ann"},
+  {key: "mu",    label: "Forecast"},
+  {key: "pUp",   label: "P(up)"},
+  {key: "band",  label: "90% band"},
+  {key: "hit",   label: "Yesterday"},
+  {key: "trend", label: "Trend"}
+];
+function predRows() {
+  return Object.keys(U.tickers).map(function (sym) {
+    var t = U.tickers[sym], pre = U.session === "pre" && t.price.pre !== null;
+    var f = t.forecast || {};
+    return {
+      sym: sym, t: t, sleeve: t.sleeve, price: pre ? t.price.pre : t.price.close, pre: pre,
+      d1: t.ret.d1, mom: t.ret.mom12_1, vol: t.vol.ann, mu: f.mu, pUp: f.pUp, lo: f.lo90, hi: f.hi90,
+      band: f.hi90 !== undefined && f.lo90 !== undefined && f.hi90 !== null ? f.hi90 - f.lo90 : null,
+      hit: t.lastScore ? t.lastScore.hit : null, trend: {up: 2, mixed: 1, down: 0}[t.trend.state]
+    };
+  });
+}
+function renderUsPred() {
+  var rows = predRows(), k = S.usSort.key, dir = S.usSort.dir;
+  rows.sort(function (a, b) {
+    var x = a[k], y = b[k];
+    if (x === null || x === undefined) return 1;
+    if (y === null || y === undefined) return -1;
+    if (typeof x === "string") return x < y ? -dir : x > y ? dir : 0;
+    return (x - y) * dir;
+  });
+  document.getElementById("usPredLede").textContent =
+    "Forecast for " + fmtDate(rows[0].t.forecast ? rows[0].t.forecast.target : U.date) + ", made " + sessionLabel(U.session) +
+    (U.session === "pre" ? " with the overnight gap folded in. " : ". ") +
+    "Mean and 90% conformal band are next day log returns. Yesterday is whether the previous forecast got the sign right. Click a column to sort.";
+  var h = "<thead><tr>" + PRED_COLS.map(function (c) {
+    var on = c.key === k;
+    return '<th class="sortable" data-key="' + c.key + '"' + (on ? ' aria-sort="' + (dir > 0 ? "ascending" : "descending") + '"' : "") + ">" +
+      c.label + (on ? (dir > 0 ? " &#9650;" : " &#9660;") : "") + "</th>";
+  }).join("") + "</tr></thead><tbody>";
+  rows.forEach(function (r) {
+    var t = r.t, tags = "";
+    if (t.lev > 1) tags += ' <span class="tag us">' + t.lev + "x</span>";
+    if ((t.flags || []).indexOf("cryptoAdjacent") >= 0) tags += ' <span class="tag cfm">confirm in app</span>';
+    if ((t.flags || []).indexOf("thin") >= 0) tags += ' <span class="tag mid">thin</span>';
+    if (t.earnings) tags += ' <span class="tag mid">earnings ' + esc(fmtDate(t.earnings).replace(/ \d{4}$/, "")) + "</span>";
+    var hit = r.hit === null ? '<span class="dim">new</span>' : r.hit ? '<span class="hitok">&#10003;</span>' : '<span class="hitno">&#10007;</span>';
+    h += "<tr><td><b>" + esc(r.sym) + "</b>" + tags +
+      '<span style="display:block;color:var(--tx3);font-size:11px;white-space:normal">' + esc(t.name) + "</span></td>" +
+      '<td class="dim">' + esc(r.sleeve) + "</td>" +
+      "<td>" + usd(r.price) + (r.pre ? ' <span class="dim" style="font-size:10px">pre</span>' : "") + "</td>" +
+      "<td" + (r.d1 < 0 ? ' style="color:var(--bad)"' : "") + ">" + pf(r.d1) + "</td>" +
+      "<td>" + pf(r.mom, 0) + "</td>" +
+      "<td>" + pu(r.vol, 0) + "</td>" +
+      "<td>" + pf(r.mu, 2) + "</td>" +
+      "<td>" + pu(r.pUp, 0) + "</td>" +
+      '<td class="dim">' + pf(r.lo, 1) + " to " + pf(r.hi, 1) + "</td>" +
+      "<td>" + hit + "</td>" +
+      '<td><span class="chip ' + esc(t.trend.state) + '">' + esc(t.trend.state) + "</span></td></tr>";
+  });
+  h += "</tbody>";
+  var tbl = document.getElementById("usPredTbl");
+  tbl.innerHTML = h;
+  Array.prototype.forEach.call(tbl.querySelectorAll("th.sortable"), function (th) {
+    th.addEventListener("click", function () {
+      var key = th.getAttribute("data-key");
+      if (S.usSort.key === key) S.usSort.dir = -S.usSort.dir;
+      else S.usSort = {key: key, dir: key === "sym" || key === "sleeve" ? 1 : -1};
+      renderUsPred();
+    });
+  });
+  var lev = Object.keys(U.tickers).filter(function (s) { return U.tickers[s].lev > 1; }).length;
+  var cry = Object.keys(U.tickers).filter(function (s) { return (U.tickers[s].flags || []).indexOf("cryptoAdjacent") >= 0; }).length;
+  document.getElementById("usPredNote").innerHTML =
+    '<div class="note"><b>Read the band, not the mean.</b> ' + esc(U.notes.direction) + "</div>" +
+    '<div class="note warn"><b>' + lev + " leveraged rows, " + cry + " crypto adjacent rows.</b> " + esc(U.notes.leverage) +
+    " The crypto adjacent names can be withdrawn from INDmoney without notice, confirm in the app before counting on one.</div>";
+}
+
+/* ---- scorecard */
+function tile(label, big, sub, cls) {
+  return '<div class="tile' + (cls ? " " + cls : "") + '"><div class="lab">' + label + '</div><div class="big">' + big + '</div><div class="sub">' + sub + "</div></div>";
+}
+function skillCls(x) { return x === null || x === undefined ? "" : x > 0.01 ? "good" : x < -0.01 ? "poor" : "flat"; }
+function renderUsScore() {
+  var sc = U.scorecard, el = document.getElementById("usScoreTiles");
+  var ciLo = sc.hitCI ? sc.hitCI[0] : null, ciHi = sc.hitCI ? sc.hitCI[1] : null;
+  var dirCls = ciLo !== null && ciLo > 0.5 ? "good" : ciHi !== null && ciHi < 0.5 ? "poor" : "flat";
+  document.getElementById("usScoreLede").textContent =
+    sc.days + " trading days, " + (+sc.n).toLocaleString("en-IN") + " scored forecasts across " + Object.keys(U.tickers).length +
+    " tickers. Every skill number sits next to its baseline and its sample size, because without those it is a story.";
+  /* Every one of these is null until something has been scored. A null must read as n/a, never as 0.00. */
+  var has = function (x) { return x !== null && x !== undefined; };
+  var nd = function (x, dp) { return has(x) ? (+x).toFixed(dp) : "n/a"; };
+  var noScores = "no scored forecasts yet";
+  var h = '<div class="tiles">' +
+    tile("Hit rate", pu(sc.hitRate), sc.n ? "95% CI " + pu(ciLo, 0) + " to " + pu(ciHi, 0) + ", n " + (+sc.n).toLocaleString("en-IN") : noScores + ", n 0", dirCls) +
+    tile("Brier skill", pf(sc.brierSkill, 2), has(sc.brier) ? "vs climatology " + nd(sc.brierClim, 4) + ", model " + nd(sc.brier, 4) : noScores, skillCls(sc.brierSkill)) +
+    tile("CRPS skill", pf(sc.crpsSkill, 2), has(sc.crps) ? "vs random walk with drift, " + nd(sc.crpsBase, 5) + " to " + nd(sc.crps, 5) : noScores, skillCls(sc.crpsSkill)) +
+    tile("90% coverage", pu(sc.cov90), has(sc.cov90) ? "target 90, and the 50% band covers " + pu(sc.cov50, 0) : noScores,
+      !has(sc.cov90) ? "" : sc.cov90 >= 0.85 && sc.cov90 <= 0.95 ? "good" : sc.cov90 < 0.8 || sc.cov90 > 0.97 ? "poor" : "flat") +
+    tile("Variance skill", pf(sc.varSkill.combo, 2), has(sc.varSkill.combo) ? "combo vs EWMA on QLIKE; GJR " + pf(sc.varSkill.gjr, 1) + ", HAR " + pf(sc.varSkill.har, 1) : noScores, skillCls(sc.varSkill.combo)) +
+    tile("DM t stat", nd(sc.dmT, 2), "Diebold-Mariano on CRPS, Newey-West lag 5, needs 1.96", has(sc.dmT) && Math.abs(sc.dmT) >= 1.96 ? "good" : "flat") +
+    tile("Min track record", has(sc.minTrlDays) ? (+sc.minTrlDays).toLocaleString("en-IN") + " d" : "n/a",
+      has(sc.minTrlDays) ? "days needed before this paper Sharpe means anything, about " + (sc.minTrlDays / 252).toFixed(1) + " years" : "needs ten paper days before it can be computed", "flat") +
+    tile("Paper Sharpe", nd(sc.sharpePaper, 2), "shadow portfolio since day one, annualised, vs its baseline", "flat") +
+    "</div>";
+  var bs = sc.bySession || {}, bl = sc.bySleeve || {};
+  h += driverRow("By session", "pre " + pu(bs.pre && bs.pre.hitRate, 0) + " / post " + pu(bs.post && bs.post.hitRate, 0),
+    "hit rate, n " + (bs.pre ? bs.pre.n : 0) + " and " + (bs.post ? bs.post.n : 0) + "; CRPS skill " + pf(bs.pre && bs.pre.crpsSkill) + " and " + pf(bs.post && bs.post.crpsSkill));
+  h += driverRow("By sleeve", "ETF " + pu(bl.etf && bl.etf.hitRate, 0) + " / stock " + pu(bl.stock && bl.stock.hitRate, 0),
+    "hit rate, n " + (bl.etf ? bl.etf.n : 0) + " and " + (bl.stock ? bl.stock.n : 0) + "; CRPS skill " + pf(bl.etf && bl.etf.crpsSkill) + " and " + pf(bl.stock && bl.stock.crpsSkill));
+  h += driverRow("Log score skill", pf(sc.logSkill, 2), "vs random walk with drift");
+  el.innerHTML = h;
+
+  var coin = ciLo !== null && ciLo <= 0.5 && ciHi >= 0.5;
+  var sentence;
+  if (!sc.n) {
+    sentence = "<b>What this says.</b> Nothing yet. A forecast is scored by the post run on its target day, so the first scores arrive with the first post run after a forecast was published, and every tile above fills in from there.";
+  } else {
+    sentence = "<b>What this says.</b> After " + sc.days + " days and " + (+sc.n).toLocaleString("en-IN") + " forecasts the hit rate is " +
+      pu(sc.hitRate) + " and its interval " + (coin ? "contains" : "excludes") + " 50%, so direction " +
+      (coin ? "is not distinguishable from a coin flip yet" : (sc.hitRate > 0.5 ? "is ahead of a coin flip, which at this sample size still proves little" : "is behind a coin flip")) +
+      ". CRPS skill of " + pf(sc.crpsSkill, 1) + " against a random walk with drift has " +
+      (has(sc.dmT) ? "a DM t of " + nd(sc.dmT, 2) + (Math.abs(sc.dmT) >= 1.96 ? ", which clears the usual 1.96" : ", short of the usual 1.96") : "no DM t yet") +
+      ". The 90% band covered " + pu(sc.cov90, 0) + " of outcomes" +
+      (!has(sc.cov90) ? "" : sc.cov90 >= 0.85 && sc.cov90 <= 0.95 ? ", about right" : sc.cov90 < 0.85 ? ", too narrow" : ", too wide") +
+      ", and the variance combination " + (has(sc.varSkill.combo) ? (sc.varSkill.combo >= 0 ? "beats" : "trails") + " EWMA by " + pf(Math.abs(sc.varSkill.combo), 1) + " on QLIKE" : "has no QLIKE comparison against EWMA yet") +
+      ", which is where the skill is expected to live. " +
+      (has(sc.minTrlDays) ? "The minimum track record length is " + (+sc.minTrlDays).toLocaleString("en-IN") + " days, so nothing about the paper portfolio is evidence yet."
+        : "The minimum track record length needs ten paper days before it can be computed, so nothing about the paper portfolio is evidence yet.");
+  }
+  document.getElementById("usScoreText").innerHTML = '<div class="note">' + sentence + "</div>";
+  renderUsScoreChart();
+  document.getElementById("usPit").innerHTML = svgHist(sc.pitHist || [], sc.n) +
+    '<div class="clegend"><span>Probability integral transform of every scored outcome in ten bins. Flat is calibrated, a U shape means the bands are too narrow, a hump means too wide. Dashed line is the uniform expectation.</span></div>';
+}
+function renderUsScoreChart() {
+  var daily = S.usDaily || U.scorecard.daily || [];
+  document.getElementById("usScoreChart").innerHTML = svgLine(daily) +
+    '<div class="clegend"><span><i style="background:var(--us)"></i>hit rate, 20 day rolling, weighted by forecasts</span>' +
+    '<span><i style="background:var(--accent)"></i>CRPS skill vs random walk with drift, daily</span>' +
+    "<span>" + daily.length + " days" + (S.usDaily ? ", from the ledger Worker" : ", from the last build") + "</span></div>";
+}
+
+/* ---- inline SVG charts. Plain polylines in a viewBox, so they scale with the card. */
+function svgLine(daily) {
+  var W = 600, H = 220, L = 40, R = 12, T = 10, gap = 18, ph = (H - T - gap - 22) / 2;
+  if (!daily.length) return '<svg class="chart" viewBox="0 0 ' + W + " " + H + '"><text x="' + (W / 2) + '" y="' + (H / 2) + '" text-anchor="middle">no scored days yet</text></svg>';
+  var hit = [], crp = [];
+  for (var i = 0; i < daily.length; i++) {
+    var hs = 0, ns = 0;
+    for (var j = Math.max(0, i - 19); j <= i; j++) { hs += (daily[j].hitRate || 0) * (daily[j].n || 0); ns += daily[j].n || 0; }
+    hit.push(ns ? hs / ns : null); crp.push(daily[i].crpsSkill);
+  }
+  var xs = function (i) { return L + (daily.length === 1 ? (W - L - R) / 2 : i / (daily.length - 1) * (W - L - R)); };
+  function panel(vals, top, lo, hi, ref, cls, fmt) {
+    var ys = function (v) { return top + ph - (v - lo) / (hi - lo) * ph; };
+    var s = '<line class="axis" x1="' + L + '" y1="' + top + '" x2="' + L + '" y2="' + (top + ph) + '"/>';
+    [lo, (lo + hi) / 2, hi].forEach(function (g) {
+      s += '<line class="grid" x1="' + L + '" y1="' + ys(g).toFixed(1) + '" x2="' + (W - R) + '" y2="' + ys(g).toFixed(1) + '"/>' +
+        '<text x="' + (L - 5) + '" y="' + (ys(g) + 3.5).toFixed(1) + '" text-anchor="end">' + fmt(g) + "</text>";
+    });
+    if (ref >= lo && ref <= hi) s += '<line class="ref" x1="' + L + '" y1="' + ys(ref).toFixed(1) + '" x2="' + (W - R) + '" y2="' + ys(ref).toFixed(1) + '"/>';
+    var pts = vals.map(function (v, i) { return v === null || v === undefined ? null : xs(i).toFixed(1) + "," + ys(Math.max(lo, Math.min(hi, v))).toFixed(1); }).filter(Boolean);
+    s += '<polyline class="' + cls + '" points="' + pts.join(" ") + '"/>';
+    if (pts.length === 1) s += '<circle cx="' + pts[0].split(",")[0] + '" cy="' + pts[0].split(",")[1] + '" r="3" class="' + cls + '"/>';
+    return s;
+  }
+  var cmin = Math.min.apply(null, crp.concat([-0.05])), cmax = Math.max.apply(null, crp.concat([0.05]));
+  var cr = Math.max(Math.abs(cmin), Math.abs(cmax)); cr = Math.ceil(cr * 20) / 20;
+  var s = '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Rolling hit rate and CRPS skill">';
+  s += panel(hit, T, 0.3, 0.7, 0.5, "l1", function (g) { return Math.round(g * 100) + "%"; });
+  s += panel(crp, T + ph + gap, -cr, cr, 0, "l2", function (g) { return (g > 0 ? "+" : "") + Math.round(g * 100) + "%"; });
+  /* month ticks along the bottom */
+  var seen = {}, y0 = H - 6, lastLabelX = -1e9;
+  daily.forEach(function (d, i) {
+    var m = (d.date || "").slice(0, 7);
+    if (!m || seen[m]) return;
+    seen[m] = 1;
+    s += '<line class="axis" x1="' + xs(i).toFixed(1) + '" y1="' + (y0 - 14) + '" x2="' + xs(i).toFixed(1) + '" y2="' + (y0 - 10) + '"/>';
+    /* a label every month, unless two month starts sit within a label's width of each other (the first weeks of a record) */
+    if (xs(i) - lastLabelX < 70) return;
+    lastLabelX = xs(i);
+    s += '<text x="' + xs(i).toFixed(1) + '" y="' + y0 + '" text-anchor="' + (i === 0 ? "start" : "middle") + '">' + esc(fmtDate(d.date).replace(/^\d+ /, "")) + "</text>";
+  });
+  return s + "</svg>";
+}
+function svgHist(bins, n) {
+  var W = 600, H = 190, L = 36, R = 12, T = 12, B = 26;
+  var mx = Math.max.apply(null, bins.concat([1])), ref = n ? n / bins.length : 0;
+  mx = Math.max(mx, ref) * 1.15;
+  var bw = (W - L - R) / Math.max(1, bins.length);
+  var ys = function (v) { return T + (H - T - B) - v / mx * (H - T - B); };
+  var s = '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="PIT histogram">';
+  s += '<line class="axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
+  bins.forEach(function (v, i) {
+    var x = L + i * bw + 3, y = ys(v);
+    s += '<rect class="hbar" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw - 6).toFixed(1) + '" height="' + (H - B - y).toFixed(1) + '" rx="2"/>' +
+      '<text x="' + (x + (bw - 6) / 2).toFixed(1) + '" y="' + (y - 3).toFixed(1) + '" text-anchor="middle">' + v + "</text>" +
+      '<text x="' + (L + i * bw).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + (i / bins.length).toFixed(1) + "</text>";
+  });
+  s += '<text x="' + (W - R) + '" y="' + (H - 8) + '" text-anchor="middle">1.0</text>';
+  if (ref) s += '<line class="ref" x1="' + L + '" y1="' + ys(ref).toFixed(1) + '" x2="' + (W - R) + '" y2="' + ys(ref).toFixed(1) + '"/>' +
+    '<text x="' + (L - 4) + '" y="' + (ys(ref) + 3.5).toFixed(1) + '" text-anchor="end">' + Math.round(ref) + "</text>";
+  return s + "</svg>";
+}
+function svgFan(f, title) {
+  var W = 600, H = 230, L = 46, R = 14, T = 12, B = 28;
+  var hs = [21, 63, 126, 252], q = f.q || {};
+  var pts = [[0, [0, 0, 0, 0, 0]]].concat(hs.filter(function (h) { return q[String(h)]; }).map(function (h) { return [h, q[String(h)]]; }));
+  if (pts.length < 2) return '<svg class="chart" viewBox="0 0 ' + W + " " + H + '"><text x="' + (W / 2) + '" y="' + (H / 2) + '" text-anchor="middle">no fan recorded</text></svg>';
+  var lo = Math.min.apply(null, pts.map(function (p) { return p[1][0]; })), hi = Math.max.apply(null, pts.map(function (p) { return p[1][4]; }));
+  lo = Math.floor(lo * 10) / 10 - 0.0001; hi = Math.ceil(hi * 10) / 10 + 0.0001;
+  var xs = function (d) { return L + d / 252 * (W - L - R); }, ys = function (v) { return T + (H - T - B) - (v - lo) / (hi - lo) * (H - T - B); };
+  function band(a, b) {
+    var up = pts.map(function (p) { return xs(p[0]).toFixed(1) + "," + ys(p[1][b]).toFixed(1); });
+    var dn = pts.slice().reverse().map(function (p) { return xs(p[0]).toFixed(1) + "," + ys(p[1][a]).toFixed(1); });
+    return up.concat(dn).join(" ");
+  }
+  var s = '<svg class="chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(title) + ' twelve month fan">';
+  var step = (hi - lo) > 1.2 ? 0.25 : (hi - lo) > 0.6 ? 0.2 : 0.1;
+  for (var g = Math.ceil(lo / step) * step; g <= hi + 1e-9; g += step) {
+    s += '<line class="' + (Math.abs(g) < 1e-9 ? "ref" : "grid") + '" x1="' + L + '" y1="' + ys(g).toFixed(1) + '" x2="' + (W - R) + '" y2="' + ys(g).toFixed(1) + '"/>' +
+      '<text x="' + (L - 5) + '" y="' + (ys(g) + 3.5).toFixed(1) + '" text-anchor="end">' + (g > 0 ? "+" : "") + Math.round(g * 100) + "%</text>";
+  }
+  s += '<polygon class="b95" points="' + band(0, 4) + '"/><polygon class="b75" points="' + band(1, 3) + '"/>';
+  s += '<polyline class="med" points="' + pts.map(function (p) { return xs(p[0]).toFixed(1) + "," + ys(p[1][2]).toFixed(1); }).join(" ") + '"/>';
+  for (var m = 1; m <= 12; m++) {
+    var x = xs(m * 21);
+    s += '<line class="axis" x1="' + x.toFixed(1) + '" y1="' + (H - B) + '" x2="' + x.toFixed(1) + '" y2="' + (H - B + 4) + '"/>';
+    if (m % 3 === 0) s += '<text x="' + x.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + m + " mo</text>";
+  }
+  s += '<line class="axis" x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) + '"/>';
+  return s + "</svg>";
+}
+function fanCard(key, title, sub) {
+  var f = U.fans && U.fans[key];
+  if (!f) return card(title, '<div class="note">No fan recorded for ' + esc(key) + " yet.</div>");
+  var y = f.q && f.q["252"];
+  return card(title, svgFan(f, title) +
+    '<div class="clegend"><span><i style="background:var(--us);opacity:.3"></i>5 to 95</span><span><i style="background:var(--us);opacity:.6"></i>25 to 75</span>' +
+    '<span><i style="background:var(--us)"></i>median</span></div>' +
+    (y ? driverRow("One year", pf(y[2], 0) + " median", pf(y[0], 0) + " to " + pf(y[4], 0) + " covers 90% of paths") : "") +
+    driverRow("Drift used", pf(f.drift, 1), "w " + (+f.w).toFixed(2) + " on the sample, " + (1 - f.w).toFixed(2) + " on the " + pf(f.driftLR, 1) + " long run average, as of " + fmtDate(f.asOf)) +
+    (sub ? '<div class="note" style="margin-top:10px">' + sub + "</div>" : ""));
+}
+function renderUsFans() {
+  document.getElementById("usFans").innerHTML =
+    fanCard("SPY", "SPY, twelve months", "The centre of this fan is the 98 year average, not a prediction. The width is the part that carries information: it is the last five years of daily moves, resampled in blocks, with today's volatility scaling the first sixty days.") +
+    fanCard("QQQ", "QQQ, twelve months", "Same construction. Fans are recorded on the first post run of each month so that a year from now the realised path can be scored against this one with pinball loss.");
+}
+
+/* ---- recommendation cards */
+function renderUsRecs() {
+  var sec = document.getElementById("usRecSec"), el = document.getElementById("usRecs"), banner = document.getElementById("usRecBanner");
+  var have = U.recs && U.recs.etf && U.recs.etf.picks;
+  var show = have && U.dayNumber > (U.gateDays || 7);
+  sec.hidden = !show;
+  if (!show) { el.innerHTML = ""; banner.innerHTML = ""; return; }
+  banner.innerHTML = U.gateOpen ? "" :
+    '<div class="usgate"><b>Data degraded, gate closed.</b> This is the last recommendation issued, shown for reference. ' +
+    "Do not act on it until the checks pass again.<ul>" + (U.gateReasons || []).map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul></div>";
+  document.getElementById("usRecLede").textContent =
+    "Issued " + fmtDate(U.recs.etf.date) + " for " + esc(U.recs.etf.month) + ", held until " + fmtDate(U.recs.nextIssue) +
+    ". Trend filter, 12-1 momentum ranked per unit of volatility, inverse vol weights, sleeve vol target (ETF 25%, stock 50%), 3x line capped at $10. The lines scale with the budget boxes above.";
+  el.innerHTML = recCard("etf") + recCard("stock");
+}
+function recCard(sleeve) {
+  var r = scaledRec(sleeve);
+  if (!r) return card(sleeve === "etf" ? "ETF sleeve" : "Stock sleeve", '<div class="note">No recommendation recorded.</div>');
+  var rec = r.rec, h = "";
+  /* the empty case is a note, not a table row: the 520px table scrolls on a phone and would clip the sentence */
+  if (!r.picks.length) h += '<div class="note">Nothing qualified this month: no line survived the trend filter, the earnings skip and the sizing caps at the $3 minimum.</div>';
+  else h += '<div class="tblwrap"><table class="picks" style="min-width:520px"><thead><tr><th>Pick</th><th>$</th><th>Weight</th><th>12-1 mom</th><th>Vol</th></tr></thead><tbody>';
+  r.picks.forEach(function (p) {
+    h += "<tr><td><b>" + esc(p.sym) + "</b>" + (p.lev > 1 ? ' <span class="tag us">' + p.lev + "x</span>" : "") +
+      ((p.flags || []).indexOf("cryptoAdjacent") >= 0 ? ' <span class="tag cfm">confirm in app</span>' : "") +
+      '<span style="display:block;color:var(--tx3);font-size:11px;white-space:normal">' + esc(p.name || "") + ". " + esc(p.why || "") + "</span></td>" +
+      "<td><b>" + usdW(p.usd) + "</b></td><td>" + pu(r.deployed ? p.usd / r.deployed : 0, 0) + "</td><td>" + pf(p.mom, 0) + "</td><td>" + pu(p.sigma, 0) + "</td></tr>";
+  });
+  if (r.picks.length) h += "</tbody></table></div>";
+  if (rec.skipped && rec.skipped.length) {
+    h += '<div class="note warn" style="margin-top:10px"><b>Skipped, not banned:</b> ' + rec.skipped.map(function (s) { return esc(s.sym) + " (" + esc(s.why) + ")"; }).join("; ") + "</div>";
+  }
+  var c = usCostLine(r.deployed);
+  h += '<div style="margin-top:10px">';
+  h += driverRow("Deployed", usdW(r.deployed) + " of " + usdW(r.budget), "regime " + esc(rec.regime) + ", VIX ratio " + (+rec.vixRatio).toFixed(2) + ", deploy fraction " + pu(rec.deployFrac, 0));
+  h += driverRow("Held", usdW(r.held), r.held > 0 ? "rolls into next month's hold bucket" : "nothing held back");
+  h += driverRow("Baseline", (rec.baseline || []).map(function (b) { return usdW(b.usd * r.f) + " " + esc(b.sym); }).join(" + "), "what the paper record is measured against");
+  h += driverRow("Costs", usd(c.lo) + " to " + usd(c.hi), pu(c.pctLo, 2) + " to " + pu(c.pctHi, 2) + ", brokerage plus GST plus FX markup band");
+  if (rec.paper && !rec.paper.since) {
+    h += driverRow("Paper", "unfilled", "the paper book fills at the next trading day's open after the recommendation" + (rec.shadow ? ", shadow" : ""));
+  } else if (rec.paper) {
+    var p = rec.paper;
+    h += driverRow("Paper, since " + fmtDate(p.since), pf(p.ret),
+      "baseline " + pf(p.baselineRet) + ": " + usd(p.value) + " vs " + usd(p.baselineValue) + " on " + usd(p.invested) + " invested, filled at the next open, marked at adjusted close" + (rec.shadow ? ", shadow" : ""));
+  }
+  h += "</div>";
+  var fk = sleeve + "Basket";
+  if (U.fans && U.fans[fk]) {
+    h += '<div class="hl-sub" style="margin-top:14px">Basket, twelve months</div>' + svgFan(U.fans[fk], sleeve + " basket") +
+      '<div class="clegend"><span><i style="background:var(--us);opacity:.3"></i>5 to 95</span><span><i style="background:var(--us);opacity:.6"></i>25 to 75</span><span><i style="background:var(--us)"></i>median</span></div>';
+  }
+  return card((sleeve === "etf" ? "ETF sleeve, " : "Stock sleeve, ") + usdW(r.budget) + " a month", h);
+}
+
+/* ---- diagnostics */
+function renderUsDiag() {
+  var el = document.getElementById("usDiag"), h = "";
+  ["SPY", "QQQ"].forEach(function (sym) {
+    var d = U.diagnostics && U.diagnostics[sym];
+    if (!d) { h += card(sym, '<div class="note">No diagnostics recorded.</div>'); return; }
+    var b = "";
+    Object.keys(d.vr || {}).forEach(function (q) {
+      var v = d.vr[q];
+      b += driverRow("Variance ratio, q " + esc(q), (+v.vr).toFixed(3), "robust z " + (v.z >= 0 ? "+" : "") + (+v.z).toFixed(2) + (Math.abs(v.z) < 1.96 ? ", random walk not rejected" : ", rejects random walk"));
+    });
+    if (d.hurst) b += driverRow("Hurst, Lo modified R/S", (+d.hurst.h).toFixed(3), "noise band " + (+d.hurst.lo).toFixed(2) + " to " + (+d.hurst.hi).toFixed(2) +
+      (d.hurst.h >= 0.45 && d.hurst.h <= 0.55 ? ", reads as noise" : d.hurst.h > 0.55 ? ", mild persistence" : ", mild mean reversion"));
+    if (d.overnight) b += driverRow("Overnight share of variance", pu(d.overnight.share, 0), "mean gap " + pf(d.overnight.meanGap, 3) + ", mean open to close " + pf(d.overnight.meanIntraday, 3));
+    b += driverRow("Autocorrelation", "lag 1 " + (+d.ac1).toFixed(3) + ", lag 5 " + (+d.ac5).toFixed(3), "of daily log returns");
+    h += card(sym, b + '<div class="note" style="margin-top:10px">Display only. If any of these ever looked exploitable the honest response is suspicion, not a position.</div>');
+  });
+  el.innerHTML = h;
+}
+
+/* Long score history from the ledger Worker. The page must behave exactly the same when
+   the Worker is missing, so every failure path is silent and the build's daily list stays. */
+function fetchUsHistory() {
+  if (!U || S.usFetched || typeof fetch !== "function") return;
+  S.usFetched = true;
+  var from = new Date(Date.now() - 400 * 86400000).toISOString().slice(0, 10);
+  try {
+    fetch(LEDGER + "/ledger?kind=score&from=" + from + "&limit=5000", {mode: "cors"})
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.rows || !j.rows.length) return;
+        var by = {};
+        j.rows.forEach(function (s) {
+          if (!s || !s.date) return;
+          var d = by[s.date] || (by[s.date] = {date: s.date, n: 0, hit: 0, crps: 0, crpsB: 0, cov: 0, brier: 0, brierC: 0});
+          d.n += 1; d.hit += s.hit ? 1 : 0; d.crps += +s.crps || 0; d.cov += s.cov90 ? 1 : 0; d.brier += +s.brier || 0;
+          d.crpsB += s.base ? +s.base.crps || 0 : 0; d.brierC += s.base ? +s.base.brierClim || 0 : 0;
+        });
+        var daily = Object.keys(by).sort().map(function (k) {
+          var d = by[k];
+          return {date: d.date, n: d.n, hitRate: d.hit / d.n, crpsSkill: d.crpsB ? 1 - d.crps / d.crpsB : 0,
+                  cov90: d.cov / d.n, brierSkill: d.brierC ? 1 - d.brier / d.brierC : 0};
+        });
+        if (daily.length <= ((U.scorecard || {}).daily || []).length) return;
+        S.usDaily = daily;
+        if (isUs()) renderUsScoreChart();
+      })
+      .catch(function () {});
+  } catch (e) {}
+}
+
+function renderUsAll() {
+  if (!U) { document.getElementById("usOnly").hidden = true; return; }
+  renderUsBudget(); renderUsReadings(); renderUsWeights(); renderUsPred();
+  renderUsScore(); renderUsRecs(); renderUsFans(); renderUsDiag();
+  fetchUsHistory();
+}
+
 function renderAll() {
   renderStaleness();
   /* A board whose data source failed in the last build must not render as an empty page. */
   if (isMulti() && !B()) S.board = "signal";
-  ["signal", "safe", "growth", "offshore"].forEach(function (b) {
+  BOARDS.forEach(function (b) {
     document.getElementById("tab" + b.charAt(0).toUpperCase() + b.slice(1))
       .setAttribute("aria-selected", S.board === b);
   });
@@ -828,31 +1373,50 @@ function renderAll() {
      else, which reads as a bug even though the maths was right. */
   document.getElementById("amt").value = budgetNow();
 
-  var multi = isMulti();
+  var multi = isMulti(), us = isUs();
   document.getElementById("multiOnly").hidden = !multi;
-  document.getElementById("metalOnly").hidden = multi;
-  document.getElementById("gaugewrap").hidden = multi;
+  document.getElementById("metalOnly").hidden = multi || us;
+  document.getElementById("gaugewrap").hidden = multi || us;
   /* The daily cadence is a gold and silver idea. Six sleeves cannot be bought daily at
      any sane ticket size, so the option is hidden rather than left to fail quietly. */
-  document.getElementById("mDay").hidden = multi;
-  if (multi && S.mode === "day") S.mode = "month";
+  document.getElementById("mDay").hidden = multi || us;
+  if ((multi || us) && S.mode === "day") S.mode = "month";
+  /* The US board is dollars and two sleeves: the rupee amount modes and the split card
+     do not apply, so its own section replaces them. */
+  document.getElementById("modes").hidden = us;
+  document.getElementById("splitgrid").hidden = us;
+  document.getElementById("usOnly").hidden = !us || !U;
 
-  renderTicker(); renderHeadline(); renderSplit(); renderDrivers();
-  if (multi) { renderSleeves(); renderCorr(); renderBacktest(); renderRoute(); }
+  renderTicker(); renderHeadline();
+  if (!us) { renderSplit(); renderDrivers(); }
+  if (us) renderUsAll();
+  else if (multi) { renderSleeves(); renderCorr(); renderBacktest(); renderRoute(); }
   else { renderInstruments(); renderIndicators(); renderPrices(); }
   renderMethod();
   document.getElementById("footmeta").innerHTML =
     "Rebuilt " + esc(D.generatedIst) + " from LBMA benchmark fixings" +
     (spliced() ? " to " + esc(D.history.lbmaTo) + " and daily spot closes to " + esc(D.asOfFix) : " (" + esc(D.asOfFix) + ")") +
-    ", AMFI daily NAVs and ECB reference rates. Rules and charges last reviewed " + esc(I.updated) + ".";
+    ", AMFI daily NAVs and ECB reference rates. Rules and charges last reviewed " + esc(I.updated) + "." +
+    (us && U ? " US panel rebuilt " + esc(U.generatedIst) + " (" + esc(U.session) + " run) from " + esc(U.sources.history) + ", " +
+      esc(U.sources.quotes) + ", " + esc(U.sources.vix) + " and " + esc(U.sources.tbill) + "." : "");
 }
 
 /* ---------------------------------------------------------------- wire up */
 function on(id, fn) { document.getElementById(id).addEventListener("click", fn); }
-["signal", "safe", "growth", "offshore"].forEach(function (b) {
+BOARDS.forEach(function (b) {
   on("tab" + b.charAt(0).toUpperCase() + b.slice(1), function () {
     S.board = b; localStorage.setItem("mgf.board", b); renderAll();
   });
+});
+function applyUsBudget() {
+  var e = Math.round(+document.getElementById("usEtf").value), s = Math.round(+document.getElementById("usStock").value);
+  if (e >= 1 && e <= 100000) { S.usEtf = e; localStorage.setItem("mgf.usEtf", e); }
+  if (s >= 1 && s <= 100000) { S.usStock = s; localStorage.setItem("mgf.usStock", s); }
+  renderAll();
+}
+on("usBudgetGo", applyUsBudget);
+["usEtf", "usStock"].forEach(function (id) {
+  document.getElementById(id).addEventListener("keydown", function (e) { if (e.key === "Enter") applyUsBudget(); });
 });
 on("mMonth",    function () { S.mode = "month"; localStorage.setItem("mgf.mode", "month"); renderAll(); });
 on("mDay",      function () { S.mode = "day";   localStorage.setItem("mgf.mode", "day");   renderAll(); });
@@ -871,10 +1435,10 @@ on("thDark",  function () { setTheme("dark"); });
 setTheme(S.theme);
 renderAll();
 
-/* screenshot hooks: #shot=signal|safe|growth|offshore&theme=light|dark&mode=month|day */
+/* screenshot hooks: #shot=signal|safe|growth|offshore|us&theme=light|dark&mode=month|day */
 (function () {
   var m = /shot=(\w+)/.exec(location.hash);
-  if (m && ["signal", "safe", "growth", "offshore"].indexOf(m[1]) >= 0) { S.board = m[1]; }
+  if (m && BOARDS.indexOf(m[1]) >= 0) { S.board = m[1]; }
   var t = /theme=(\w+)/.exec(location.hash);
   if (t) setTheme(t[1] === "light" ? "light" : "dark");
   var d = /mode=(\w+)/.exec(location.hash);

@@ -1,0 +1,22 @@
+name = "mygoldfund-ledger"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[[durable_objects.bindings]]
+name = "LEDGER"
+class_name = "Ledger"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Ledger"]
+
+# UTC crons that land a few minutes after the two us.yml ET crons (08:35 and 16:25 ET)
+# under both EDT (UTC-4) and EST (UTC-5). The Action is idempotent per session, so the
+# extra firing is harmless. scheduled() only does anything when the GH_PAT secret is set.
+[triggers]
+crons = ["35 12,13 * * 1-5", "25 20,21 * * 1-5"]
+
+# Secrets (set via `npx wrangler secret put <NAME>`, never in this file):
+#   LEDGER_KEY  required, Bearer token for POST /record (same value as the GitHub secret)
+#   GH_PAT      optional, fine grained PAT with Actions read/write on vaibhavgit9210/mygoldfund;
+#               without it the cron is a no-op

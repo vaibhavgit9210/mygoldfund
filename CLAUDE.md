@@ -1,21 +1,54 @@
 # mygoldfund
 
-Monthly allocation dashboard, four boards (gold/silver + global multi asset). Default budget is **₹5,000/month**
-(`MONTHLY_BUDGET` in both `app.js` and `build_data.py`, keep them in step). Repo `vaibhavgit9210/mygoldfund`, live at
-https://vaibhavkumar.is-a.dev/mygoldfund/ (Pages from `gh-pages`, so push BOTH `main` and `main:gh-pages`).
+Monthly allocation dashboard, five boards (gold/silver + global multi asset + the high risk US board). Default
+budget is **₹5,000/month** (`MONTHLY_BUDGET` in both `app.js` and `build_data.py`, keep them in step); the US board
+has its own $30 + $20. Repo `vaibhavgit9210/mygoldfund`, live at https://vaibhavkumar.is-a.dev/mygoldfund/
+(Pages from `gh-pages`, so push BOTH `main` and `main:gh-pages`).
 
 ## Shape
 
-- `index.html` + `app.js` + `instruments.js` (hand maintained constants) + `data.js` (generated, never edit)
-- **Four boards:** `signal` and `safe` (gold + silver), `growth` and `offshore` (multi asset). `isMulti()` in
-  app.js switches whole sections: `#metalOnly` vs `#multiOnly`, and hides the gauge and the daily cadence.
+- `index.html` + `app.js` + `instruments.js` (hand maintained constants) + `data.js` + `us.js` (both generated, never edit)
+- **Five boards:** `signal` and `safe` (gold + silver), `growth` and `offshore` (multi asset), `us`. `isMulti()` in
+  app.js switches whole sections: `#metalOnly` vs `#multiOnly`, and hides the gauge and the daily cadence; `isUs()`
+  hides both and shows `#usOnly` (the rupee row and the split grid are hidden by `hidden` attribute rules).
   Board copy is keyed by board name in `I.blurb[board]` and `I.method[board]`, so adding a board means adding
   those keys, not another ternary.
 - `scripts/build_data.py` pulls data and computes everything. **Stdlib only, deliberately** so the Action needs no pip install.
 - `scripts/sanity_check.py` gates publication. Add a check here whenever a new failure mode appears.
 - `.github/workflows/daily.yml` runs **twice daily** (02:30 and 08:30 UTC), commits only on change,
   force pushes `main:gh-pages`, and opens an issue on failure. Two crons because GitHub drops scheduled
-  runs under load and the job is idempotent.
+  runs under load and the job is idempotent. **It `git pull --rebase`s before pushing** because the US workflow
+  commits on its own schedule (they raced on 13 Oct 2026 and opened issue #1).
+
+## The US board (added 13 Oct 2026)
+
+- `scripts/us_universe.py` (16 ETFs, 40 stocks, `EXCLUDED` with reasons), `us_data.py` (Yahoo v8 chart + v7
+  quote with cookie and crumb, Cboe VIX CSVs, Treasury bills, NYSE calendar, `session_now()`), `us_models.py`
+  (pure maths, 133 checks in `test_us_models.py`), `us_build.py` (the twice daily run), `us_sanity.py` (gates
+  `us.js`). `ledger/` is the Cloudflare Worker `mygoldfund-ledger` (vaibhavpro9210 account, SQLite Durable
+  Object; deploy with the npx cached wrangler, `npx --no-install` refuses when a newer version exists upstream).
+  The Bearer key lives in gitignored `ledger/.ledger-key` and must equal the GitHub secret `LEDGER_KEY`.
+- `us/ledger.ndjson` is the source of truth (append only, last row per natural key wins, the Worker upserts
+  the same keys). `us/state.json` holds learner state; a missing file silently resets every learner, a corrupt
+  one exits 1 on purpose. `us/history/*.csv` is the 10 year adjclose cache (index symbols drop the caret:
+  `_VIX.csv`; the Cboe files own `VIX.csv`).
+- `.github/workflows/us.yml` runs at 08:35 and 16:25 ET using the schedule `timezone` key; the Worker cron fires
+  a few minutes later in UTC under both DST offsets, guards on the New York clock, and only dispatches if a
+  `GH_PAT` secret exists. `us_build.py` is idempotent per (date, session) and exits 0 when the market is closed,
+  except that a pre cron fired late (09:30 to 16:15 ET, no pre run yet that day) still runs as the pre run.
+- **Sizing decisions, do not quietly revert:** no Kelly cap (quarter Kelly at a 10% mean on 60% vol names caps
+  every line under the $3 minimum, so the stock sleeve held cash every month), sleeve vol targets 25% ETF / 50%
+  stock, the 3x line sized on its own vol and capped at $10 with its gates on the proxy, held cash not carried
+  into next month. The backtest in README says the shipped rules **lost to buy and hold** (1.665 vs 1.717 per
+  dollar, -41% vs -27% drawdown, 2021 to 2026); the board exists to record and test, not because it won.
+- **Direction skill is displayed, never gates.** The gate is day 8 plus integrity (both runs on 8 of the last 10
+  trading days, run not degraded, 100 scored forecasts, 90% band coverage in [80%, 97%] over the last 60 days).
+- Scorecard statistics aggregate to one number per day before any test (58 tickers move together; pooled DM
+  rejects a true null 53% of the time at the 5% level). `varSkill` uses the non negative QLIKE form and the log
+  score skill is a geometric likelihood ratio, because `1 - model/base` on negative losses is meaningless.
+- Known biases left in: the pre market gap uses raw prices, so on an ex dividend day it carries the dividend
+  drop (about 0.3% on VOO, four days a year); the hit rate Wilson interval pools tickers and is optimistic by
+  the same factor as the DM t would have been.
 
 ## Things that will bite you
 
@@ -47,8 +80,21 @@ https://vaibhavkumar.is-a.dev/mygoldfund/ (Pages from `gh-pages`, so push BOTH `
   (Wayback only had LBMA silver to 7 Apr 2025); cross checked against COMEX futures, median gap 0.15%.
   `history.lbmaTo` in data.js drives the "Spot close" vs "LBMA fix" labels.
 - Stooq is behind a JS proof of work challenge now, unusable. FRED + frankfurter + mfapi all work keyless.
+- **Yahoo answers only `User-Agent: Mozilla/5.0`, exactly that string** (the Python default UA gets a 429 at
+  once). The v7 quote endpoint needs a cookie from `fc.yahoo.com` plus a crumb from `/v1/test/getcrumb`, and
+  both must come from the **same opener** (one `build_opener(HTTPCookieProcessor)` reused); a fresh opener per
+  call gets "Invalid Crumb". After a real 429 the data layer sleeps 60 s once, falls back to the `curl` binary,
+  then to the cache, and flags the whole process so the other 61 symbols do not each sleep a minute.
+- **Yahoo's adjclose shifts by the dividend yield every ex date**, so the cache overlap check must be tight
+  (`ADJ_TOL = 1e-4`; two full pulls agree to 1e-6). At 0.5% a VOO dividend splices two bases and fakes a 0.3%
+  return every quarter, feeding the vol fits and the momentum rank.
+- Yahoo's `^VIX` daily series carries a forming bar dated today during pre market and stale bars on some NYSE
+  holidays; the builder uses the Cboe CSV for history and ignores today's bar before the close.
 - The analytics beacon's `setInterval` will hang headless Chrome unless you pass `--timeout`. It early returns
-  on `file:`, so local screenshots are fine.
+  on `file:`, so local screenshots are fine. **Give every headless run its own `--user-data-dir`**: a stuck
+  instance holding the default profile lock froze a screenshot batch for ten minutes.
+- House CSS rule `.bar{height:38px}` beats the `height` attribute on SVG rects (CSS geometry wins on SVG2 in
+  Chrome), which is why the PIT histogram bars are class `hbar`. Never reuse `.bar` inside an SVG.
 
 ## Keeping the daily update alive
 

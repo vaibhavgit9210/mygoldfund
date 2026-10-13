@@ -6,7 +6,7 @@ Two boards answer it for gold and silver, two answer it for a global multi asset
 
 Live at https://vaibhavkumar.is-a.dev/mygoldfund/
 
-Four boards, same structure, different objective:
+Five boards, same structure, different objective:
 
 | Board | Universe | Objective |
 |---|---|---|
@@ -14,10 +14,11 @@ Four boards, same structure, different objective:
 | **Safe** | gold + silver | Lose less. Minimum variance, and it parks part of the budget in a liquid fund when metal volatility runs hot. |
 | **Growth** | 6 asset classes, Indian mutual funds only | Go global without leaving the country. Equal risk contribution, fully invested, no LRS and no extra tax form. |
 | **Offshore** | 5 asset classes incl. Bitcoin, US listed ETFs | The same idea through a real foreign brokerage account under the Liberalised Remittance Scheme. |
+| **US** | 16 US ETFs + 40 single stocks, fractional via INDmoney | The deliberately high risk board. $30 + $20 a month, every daily forecast recorded and scored in public, recommendations only after a seven day recording period. See [The US board](#the-us-board) below. |
 
 The two multi asset boards deploy the **entire budget** every month and never park anything. Everything on
-every board is a mutual fund: an index fund, a fund of funds, or a US listed ETF. No single stocks, no coins
-held directly.
+the first four boards is a mutual fund: an index fund, a fund of funds, or a US listed ETF. No single stocks, no coins
+held directly. The US board is the exception and says so on every screen.
 
 Budget modes: ₹5,000/month, ₹167/day, or any custom amount. Currency toggle for Indian landed prices or international spot. Light and dark.
 
@@ -105,6 +106,121 @@ money in one wire costs about **1.3%**. The ETFs themselves cost 0.03% to 0.25% 
 is between forty and a hundred times more consequential than which fund you pick, which is why that board tells
 you to keep the habit in rupees and remit once a year.
 
+## The US board
+
+Added 13 October 2026. A $30 a month ETF sleeve and a $20 a month single stock sleeve, bought in fractional
+dollars through INDmoney's GIFT City route. The page loads twice every trading day, records what it sees, predicts
+the next day for every ticker, scores yesterday's prediction, and keeps every row forever in two places. It is the
+one board that holds single stocks and leveraged funds, and it is built so that the record, not the author,
+decides whether the engine deserves trust.
+
+**Universe.** 16 ETFs (VOO QQQM IWM SMH XBI ARKK URA ICLN TAN AIQ QTUM KWEB GDXJ, plus the 3x funds TQQQ SOXL
+UPRO) and 40 stocks (semis, AI, crypto adjacent, space, quantum, nuclear, software, consumer), with SPY and QQQ
+as benchmarks and the VIX family plus the 13 week bill as context. IBIT and WGMI are out because INDmoney blocks
+them under IFSCA's crypto exclusion (August 2025 circular), so the only crypto exposure is COIN, MSTR and the
+miners, which may be withdrawn too; those names carry a "confirm in app" tag. Everything in `scripts/us_universe.py`
+with the reason for every exclusion.
+
+**Two runs a day** (`.github/workflows/us.yml`, scheduled in New York time so the clock survives the DST change):
+
+| Run | Time | What it records | What it predicts |
+|---|---|---|---|
+| pre market | 08:35 ET | pre market print and time per ticker, VIX, VIX3M, VIX9D, bill rate | the day's close, by adjusting the overnight forecast for the gap that has already opened |
+| post close | 16:25 ET | the day's bar, post market print, the scores of yesterday's forecasts | tomorrow's close as a full density: mean, sigma, probability up, 90% and 50% bands |
+
+**Where the record lives.** `us/ledger.ndjson` in this repo is the source of truth (append only, one JSON row per
+line, readers take the last row per natural key). The same rows are POSTed to a Cloudflare Worker with a SQLite
+Durable Object (`ledger/`, `mygoldfund-ledger`) which serves them publicly: `GET /summary`, `GET /ledger?kind=score&from=&to=&sym=`,
+`GET /latest?kind=rec`. The page reads the Worker for its long history charts and falls back to the committed
+snapshot when it cannot. `us/state.json` carries the learner state (fitted parameters, expert weights, conformal
+alphas) between runs. Row kinds: `run`, `reading`, `forecast`, `score`, `rec`, `fan`, `paper`.
+
+**The forecast is a committee, and the committee is scored.** Three variance experts (RiskMetrics EWMA,
+GJR GARCH refit weekly by Nelder-Mead, HAR on the Yang-Zhang range variance) are combined by Hedge on the QLIKE
+loss. Five density experts (random walk with the long run drift, GJR with zero mean, HAR density, a trend regime
+density, a two state HMM mixture) are combined by Hedge on CRPS. Hedge weights are shrunk toward equal by
+`min(0.5, t/250)` so the engine never trusts one model more than 50/50 in its first year. The 90% and 50% bands
+are Adaptive Conformal Inference on the model's own past errors, which is what keeps coverage honest when the
+Gaussian shape is wrong. Every forecast is scored with hit rate, Brier, log score, CRPS, pinball, coverage, PIT and
+QLIKE against two baselines (random walk with drift, climatology), with Diebold-Mariano t statistics on daily cross
+sectional means (58 tickers move together, pooling them inflates t by about seven), a Wilson interval on the hit
+rate, and the Bailey and Lopez de Prado minimum track record length. All stdlib Python in `scripts/us_models.py`,
+133 checks in `scripts/test_us_models.py`.
+
+**The recommendation engine does not use the daily forecasts.** Seven days cannot validate a direction call (the
+interval on a seven day hit rate is plus or minus 37 points), so the monthly recommendation runs on rules with
+long published records instead: a 200 day and 10 month trend filter, 12-1 momentum ranked per unit of volatility,
+the top three ETFs and the top three stocks (a 52 week high bonus and an earnings skip on the stock side), inverse
+volatility weights scaled to a sleeve vol target (25% for ETFs, 50% for stocks), at most one 3x fund capped at
+$10 and gated on its underlying index's trend, vol regime and the VIX term structure, and a deploy fraction that
+halves the month's money when SPY is below trend, VIX is in backwardation or realised vol is in its top 30%.
+Unspent dollars are held in the INDmoney cash balance, never forced into the top pick. Quarter Kelly was in the
+first design and was dropped: at a 10% long run mean on 60% vol names it caps every line under the $3 minimum
+order and the stock sleeve holds cash every month.
+
+**The gate.** The engine runs in the shadows from day one and a paper book marks its picks to market daily against
+$15 VOO + $15 QQQM and $20 SPY. Order lines appear on the page from day 8 and only while the integrity checks
+pass: both runs on at least 8 of the last 10 trading days, today's run not degraded (fewer than five symbols from
+cache, a working quote call), at least 100 scored forecasts, and the 90% band covering between 80% and 97% of the
+last 60 scored days. Direction skill is displayed on the scorecard and never gates anything, because it cannot
+be established in a week, or, as the backtest below shows, in three years.
+
+### What the US backtest showed
+
+Walk forward, cold start, no lookahead, on the repo's own functions. Scripts live in the session scratchpad, the
+numbers are here.
+
+**Daily density forecasts** (22 tickers, 2024-01-02 to 2026-10-12, 15,334 forecasts):
+
+| Question | Answer |
+|---|---|
+| Does it call direction? | **No.** Hit rate 52.0% (Wilson 95% 51.3% to 52.8%), but "always up" scores 52.5% on the same days. Brier skill vs climatology is -0.16%, DM t 0.67. |
+| Does it forecast volatility? | **Yes.** GJR GARCH beats EWMA on QLIKE by 3.0% pooled (DM t -3.33), 6.5% on SPY and QQQ. HAR adds nothing (0.7%, t -0.97). |
+| Is the density better than a random walk with drift? | By a hair: CRPS skill +0.16% (DM t -2.42), log score +0.024 nats (DM t -4.51). Real, not usable. |
+| Are the bands calibrated? | Yes: the 90% band covered 90.1% and the 50% band 50.1%, within a point on all 22 tickers. |
+| Is the Gaussian shape right? | No: the PIT histogram is centre heavy (8% in each outer decile, 12% in the middle ones, chi2 328 on 9 df). Fat tails seen through a Gaussian; conformal repairs the two levels shown. |
+
+**Monthly engine as shipped** (Jan 2021 to Oct 2026, 70 issues, $50 a month, fills at the next open, held cash
+never redeployed):
+
+| Strategy | Value per $ | IRR | TWR CAGR | Max drawdown |
+|---|---|---|---|---|
+| Baseline, $15 VOO + $15 QQQM + $20 SPY | 1.717 | +18.7% | +15.9% | -27% |
+| Engine, both sleeves | **1.665** | +17.7% | +11.8% | **-41%** |
+| ETF sleeve alone: engine vs VOO+QQQM | 1.590 vs 1.762 | | | -30% vs -30% |
+| Stock sleeve alone: engine vs SPY | 1.778 vs 1.648 | | | -58% vs -24% |
+| Equal weight over the same 56 names | 2.565 | +33.0% | +23.5% | -49% |
+
+**The honest reading: the rules did not beat buy and hold on this universe, and they took far more drawdown to
+lose.** The stock sleeve's small edge over SPY is survivorship, not skill: the 40 names were chosen in October 2026
+knowing the winners, and naive equal weight across them made 3.77 per dollar, far above the engine's 1.78. Momentum
+did what momentum does in a bubble, buying OKLO and QBTS after they went up five times. The board ships anyway
+because the request was to record and test, the paper book runs live against the baseline from day one, and the
+scorecard will say in public how long it takes before any apparent edge means something. Expect that number to
+be in the thousands of days.
+
+**Costs on the INDmoney route** (shown on every order line): brokerage 0.25% plus 18% GST on it, FX markup 0.5%
+to 1.2% on each rupee to dollar transfer, no flat wire fee and no withdrawal fee, so monthly buying is viable
+here in a way it is not on the Offshore board. Fund one transfer a month, not one per order. US dividends are
+withheld at 25%, gains are at slab rate under 24 months and 12.5% after, Schedule FA applies from the first dollar.
+
+### Running the US board
+
+```bash
+python3 scripts/test_us_models.py              # 133 checks on the maths
+python3 scripts/us_build.py --session auto     # pre/post from the New York clock, exits 0 when closed
+python3 scripts/us_build.py --session post --force   # redo a session
+python3 scripts/us_build.py --offline          # cached history only, marks the run degraded
+python3 scripts/us_build.py --rebuild-usjs     # regenerate us.js from the ledger
+python3 scripts/us_sanity.py                   # refuse to publish a broken us.js
+cd ledger && npx wrangler deploy               # the Worker (secrets: LEDGER_KEY, optional GH_PAT)
+```
+
+The Action needs one repository secret, `LEDGER_KEY`, equal to the Worker secret of the same name; without it the
+run still commits the ledger and only the Worker mirror goes stale (the next run with a key resends the last three
+days). The Worker's own cron fires a few minutes after each Action slot and, if a `GH_PAT` secret exists, dispatches
+`us.yml`, which is the belt and braces against GitHub dropping a schedule. Screenshot hook: `#shot=us`.
+
 ## Honest limitations
 
 - Minimum variance is **degenerate** on this pair. With silver at twice gold's volatility it returns the same corner solution every day: all gold. The 90/10 you see on the Safe board is the **10% floor I chose**, not a discovery. Stated in the UI too.
@@ -171,5 +287,5 @@ workflows after 60 days of repository inactivity**. If that happens the stalenes
 The fix is one click: open [the Actions tab](https://github.com/vaibhavgit9210/mygoldfund/actions),
 select "daily rebuild", and press "Run workflow". That re-enables the schedule.
 
-Screenshot hooks: `#shot=signal|safe|growth|offshore`, `&theme=light|dark`, `&mode=month|day`.
+Screenshot hooks: `#shot=signal|safe|growth|offshore|us`, `&theme=light|dark`, `&mode=month|day`.
 (The daily cadence is hidden on the multi asset boards: six sleeves cannot be bought daily at a sane ticket size.)

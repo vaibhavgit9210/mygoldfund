@@ -2,11 +2,9 @@ name: us data diagnostic
 
 # One-off probe: does Yahoo Finance answer a stdlib urllib client from a GitHub-hosted
 # runner? Writes us/diag.json and commits it, so the result is readable without any auth.
+# Manual only: run it from the Actions tab when a source looks blocked.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: [".github/workflows/us-diag.yml"]
 
 permissions:
   contents: write

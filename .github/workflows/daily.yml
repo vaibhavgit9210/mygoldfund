@@ -46,6 +46,9 @@ jobs:
           else
             git add data.js data.json history
             git commit -m "data: rebuild $(date -u +%Y-%m-%d)"
+            # The US board workflow commits us/ and us.js on its own schedule; rebase on
+            # whatever landed in the meantime instead of racing it (it raced on 2026-10-13).
+            git pull --rebase origin main
             git push origin main
           fi
 
