@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-10-17T07:07:26+00:00",
- "generatedIst": "17 Oct 2026, 12:37 IST",
+ "generatedAt": "2026-10-17T12:19:09+00:00",
+ "generatedIst": "17 Oct 2026, 17:49 IST",
  "asOfFix": "2026-10-16",
  "history": {
   "from": "1968-04-01",
@@ -1699,9 +1699,9 @@
    "date": "16-Oct-2026"
   },
   "ANGEL ONE GOLD ETF": {
-   "nav": 13.5322,
+   "nav": 13.5668,
    "cat": "gold_etf",
-   "date": "15-Oct-2026"
+   "date": "16-Oct-2026"
   },
   "Edelweiss Gold ETF": {
    "nav": 145.0806,
