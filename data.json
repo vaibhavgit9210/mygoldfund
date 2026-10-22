@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-10-22T07:51:04+00:00",
- "generatedIst": "22 Oct 2026, 13:21 IST",
+ "generatedAt": "2026-10-22T13:59:32+00:00",
+ "generatedIst": "22 Oct 2026, 19:29 IST",
  "asOfFix": "2026-10-21",
  "history": {
   "from": "1968-04-01",
@@ -14,11 +14,11 @@
  },
  "gold": {
   "usdOz": 4091.63,
-  "liveUsdOz": 4087.6,
+  "liveUsdOz": 4058.3,
   "inr": {
-   "parity": 12415.19,
-   "withDuty": 14277.47,
-   "withGst": 14705.79
+   "parity": 12326.2,
+   "withDuty": 14175.13,
+   "withGst": 14600.38
   },
   "last": 4091.6346,
   "sma50": 4319.92,
@@ -36,11 +36,11 @@
  },
  "silver": {
   "usdOz": 56.4258,
-  "liveUsdOz": 56.03,
+  "liveUsdOz": 55.295,
   "inr": {
-   "parity": 170.18,
-   "withDuty": 195.71,
-   "withGst": 201.58
+   "parity": 167.95,
+   "withDuty": 193.14,
+   "withGst": 198.93
   },
   "last": 56.4258,
   "sma50": 63.59,
@@ -58,7 +58,7 @@
  },
  "gsr": {
   "value": 72.514,
-  "liveValue": 72.954,
+  "liveValue": 73.394,
   "windowYears": 30,
   "percentile": 0.63,
   "robustZ": 0.369,
@@ -1739,9 +1739,9 @@
    "date": "21-Oct-2026"
   },
   "LIC MF Gold Exchange Traded Fund": {
-   "nav": 128.6715,
+   "nav": 128.1088,
    "cat": "gold_fof",
-   "date": "21-Oct-2026"
+   "date": "22-Oct-2026"
   },
   "Motilal Oswal Gold ETF": {
    "nav": 141.227,
