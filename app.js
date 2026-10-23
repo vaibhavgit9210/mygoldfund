@@ -800,6 +800,8 @@ function renderTicker() {
 function setTheme(t) {
   S.theme = t; localStorage.setItem("mgf.theme", t);
   document.documentElement.setAttribute("data-theme", t);
+  var tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute("content", t === "light" ? "#f6f7f9" : "#0b0d10");
   document.getElementById("thLight").setAttribute("aria-pressed", t === "light");
   document.getElementById("thDark").setAttribute("aria-pressed", t === "dark");
 }
