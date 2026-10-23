@@ -364,7 +364,7 @@ function renderCorr() {
   sl.forEach(function (x, i) {
     h += "<tr><td style=\"text-align:left\"><b>" + esc(x.short) + "</b></td>" +
       C[i].map(function (v, j) {
-        if (i === j) return '<td class="v" style="color:var(--tx3)">&mdash;</td>';
+        if (i === j) return '<td class="v" style="color:var(--tx3)">-</td>';
         var t = Math.max(0, Math.min(1, (v + 0.2) / 1.2));
         return '<td class="v" style="background:color-mix(in srgb,var(--accent) ' +
           Math.round(t * 55) + '%,transparent)">' + v.toFixed(2) + "</td>";
