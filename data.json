@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-10-29T08:46:50+00:00",
- "generatedIst": "29 Oct 2026, 14:16 IST",
+ "generatedAt": "2026-10-29T15:23:38+00:00",
+ "generatedIst": "29 Oct 2026, 20:53 IST",
  "asOfFix": "2026-10-28",
  "history": {
   "from": "1968-04-01",
@@ -8,17 +8,17 @@
   "lbmaTo": "2025-04-07"
  },
  "fx": {
-  "usdinr": 95.22,
-  "date": "2026-10-28",
+  "usdinr": 95.27,
+  "date": "2026-10-29",
   "source": "frankfurter.dev (ECB)"
  },
  "gold": {
   "usdOz": 4045.43,
-  "liveUsdOz": 4025.4,
+  "liveUsdOz": 4022.4,
   "inr": {
-   "parity": 12323.34,
-   "withDuty": 14171.84,
-   "withGst": 14596.99
+   "parity": 12320.62,
+   "withDuty": 14168.71,
+   "withGst": 14593.77
   },
   "last": 4045.4335,
   "sma50": 4281.36,
@@ -36,11 +36,11 @@
  },
  "silver": {
   "usdOz": 53.4668,
-  "liveUsdOz": 52.851,
+  "liveUsdOz": 52.617,
   "inr": {
-   "parity": 161.8,
-   "withDuty": 186.07,
-   "withGst": 191.65
+   "parity": 161.17,
+   "withDuty": 185.34,
+   "withGst": 190.9
   },
   "last": 53.4668,
   "sma50": 62.48,
@@ -58,7 +58,7 @@
  },
  "gsr": {
   "value": 75.663,
-  "liveValue": 76.165,
+  "liveValue": 76.447,
   "windowYears": 30,
   "percentile": 0.7148,
   "robustZ": 0.562,
@@ -1409,9 +1409,9 @@
    "date": "28-Oct-2026"
   },
   "Choice Gold ETF": {
-   "nav": 140.5935,
+   "nav": 139.9877,
    "cat": "gold_etf",
-   "date": "28-Oct-2026"
+   "date": "29-Oct-2026"
   },
   "DSP Gold ETF": {
    "nav": 13.7598,
@@ -1739,9 +1739,9 @@
    "date": "28-Oct-2026"
   },
   "LIC MF Gold Exchange Traded Fund": {
-   "nav": 127.6106,
+   "nav": 127.0593,
    "cat": "gold_fof",
-   "date": "28-Oct-2026"
+   "date": "29-Oct-2026"
   },
   "Motilal Oswal Gold ETF": {
    "nav": 140.0683,
@@ -2537,7 +2537,7 @@
    ],
    [
     "2026-10-28",
-    4045.433
+    4045.434
    ]
   ],
   "silver": [
