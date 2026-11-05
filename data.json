@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-11-05T09:44:34+00:00",
- "generatedIst": "05 Nov 2026, 15:14 IST",
+ "generatedAt": "2026-11-05T16:39:24+00:00",
+ "generatedIst": "05 Nov 2026, 22:09 IST",
  "asOfFix": "2026-11-04",
  "history": {
   "from": "1968-04-01",
@@ -8,17 +8,17 @@
   "lbmaTo": "2025-04-07"
  },
  "fx": {
-  "usdinr": 94.64,
-  "date": "2026-11-04",
+  "usdinr": 94.48,
+  "date": "2026-11-05",
   "source": "frankfurter.dev (ECB)"
  },
  "gold": {
   "usdOz": 4116.46,
-  "liveUsdOz": 4127.6,
+  "liveUsdOz": 4119.9,
   "inr": {
-   "parity": 12559.24,
-   "withDuty": 14443.13,
-   "withGst": 14876.42
+   "parity": 12514.62,
+   "withDuty": 14391.81,
+   "withGst": 14823.57
   },
   "last": 4116.4613,
   "sma50": 4219.74,
@@ -36,11 +36,11 @@
  },
  "silver": {
   "usdOz": 52.5633,
-  "liveUsdOz": 52.871,
+  "liveUsdOz": 52.744,
   "inr": {
-   "parity": 160.87,
-   "withDuty": 185.0,
-   "withGst": 190.55
+   "parity": 160.22,
+   "withDuty": 184.25,
+   "withGst": 189.78
   },
   "last": 52.5633,
   "sma50": 60.67,
@@ -58,7 +58,7 @@
  },
  "gsr": {
   "value": 78.314,
-  "liveValue": 78.069,
+  "liveValue": 78.111,
   "windowYears": 30,
   "percentile": 0.7747,
   "robustZ": 0.718,
@@ -1399,9 +1399,9 @@
    "date": "04-Nov-2026"
   },
   "360 ONE Gold ETF": {
-   "nav": 137.3231,
+   "nav": 139.1509,
    "cat": "gold_etf",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "Axis Gold ETF": {
    "nav": 117.0675,
@@ -1409,9 +1409,9 @@
    "date": "04-Nov-2026"
   },
   "Choice Gold ETF": {
-   "nav": 139.6161,
+   "nav": 141.4781,
    "cat": "gold_etf",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "DSP Gold ETF": {
    "nav": 13.6652,
@@ -1433,15 +1433,15 @@
    "cat": "gold_fof",
    "date": "04-Nov-2026"
   },
-  "Zerodha Gold ETF": {
+  "Zerodha CASE Gold ETF": {
    "nav": 22.1255,
    "cat": "gold_etf",
    "date": "04-Nov-2026"
   },
   "360 ONE Silver ETF": {
-   "nav": 181.5191,
+   "nav": 183.2839,
    "cat": "silver_etf",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "Axis Silver ETF": {
    "nav": 183.6973,
@@ -1473,7 +1473,7 @@
    "cat": "silver_fof",
    "date": "04-Nov-2026"
   },
-  "Zerodha Silver ETF": {
+  "Zerodha CASE Silver ETF": {
    "nav": 18.6462,
    "cat": "silver_etf",
    "date": "04-Nov-2026"
@@ -1558,12 +1558,12 @@
    "cat": "silver_fof",
    "date": "04-Nov-2026"
   },
-  "Zerodha Gold ETF FoF": {
+  "Zerodha CASE Gold ETF FoF": {
    "nav": 18.3614,
    "cat": "gold_fof",
    "date": "04-Nov-2026"
   },
-  "Zerodha Silver ETF FoF": {
+  "Zerodha CASE Silver ETF FoF": {
    "nav": 16.7305,
    "cat": "silver_fof",
    "date": "04-Nov-2026"
@@ -1574,14 +1574,14 @@
    "date": "04-Nov-2026"
   },
   "ANGEL ONE GOLD ETF FOF": {
-   "nav": 12.8245,
+   "nav": 12.9898,
    "cat": "gold_fof",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "ANGEL ONE SILVER ETF FOF": {
-   "nav": 6.4345,
+   "nav": 6.4618,
    "cat": "silver_fof",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "Bandhan Gold ETF FOF": {
    "nav": 9.232,
@@ -1709,9 +1709,9 @@
    "date": "04-Nov-2026"
   },
   "ANGEL ONE GOLD ETF": {
-   "nav": 13.1435,
+   "nav": 13.3179,
    "cat": "gold_etf",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "Edelweiss Gold ETF": {
    "nav": 140.5455,
@@ -1739,9 +1739,9 @@
    "date": "04-Nov-2026"
   },
   "LIC MF Gold Exchange Traded Fund": {
-   "nav": 126.7224,
+   "nav": 128.4174,
    "cat": "gold_fof",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "Motilal Oswal Gold ETF": {
    "nav": 139.0958,
@@ -1769,9 +1769,9 @@
    "date": "04-Nov-2026"
   },
   "ANGEL ONE SILVER ETF": {
-   "nav": 7.0824,
+   "nav": 7.1497,
    "cat": "silver_etf",
-   "date": "04-Nov-2026"
+   "date": "05-Nov-2026"
   },
   "Edelweiss Silver ETF": {
    "nav": 184.5527,
