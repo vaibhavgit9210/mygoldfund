@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-11-09T10:06:24+00:00",
- "generatedIst": "09 Nov 2026, 15:36 IST",
+ "generatedAt": "2026-11-09T19:00:15+00:00",
+ "generatedIst": "10 Nov 2026, 00:30 IST",
  "asOfFix": "2026-11-06",
  "history": {
   "from": "1968-04-01",
@@ -8,17 +8,17 @@
   "lbmaTo": "2025-04-07"
  },
  "fx": {
-  "usdinr": 93.92,
-  "date": "2026-11-06",
+  "usdinr": 93.93,
+  "date": "2026-11-09",
   "source": "frankfurter.dev (ECB)"
  },
  "gold": {
   "usdOz": 4065.98,
-  "liveUsdOz": 4099.3,
+  "liveUsdOz": 4107.0,
   "inr": {
-   "parity": 12378.24,
-   "withDuty": 14234.97,
-   "withGst": 14662.02
+   "parity": 12402.81,
+   "withDuty": 14263.23,
+   "withGst": 14691.13
   },
   "last": 4065.9828,
   "sma50": 4199.28,
@@ -36,11 +36,11 @@
  },
  "silver": {
   "usdOz": 51.91,
-  "liveUsdOz": 52.722,
+  "liveUsdOz": 52.925,
   "inr": {
-   "parity": 159.2,
-   "withDuty": 183.08,
-   "withGst": 188.57
+   "parity": 159.83,
+   "withDuty": 183.8,
+   "withGst": 189.32
   },
   "last": 51.91,
   "sma50": 60.0,
@@ -58,7 +58,7 @@
  },
  "gsr": {
   "value": 78.328,
-  "liveValue": 77.753,
+  "liveValue": 77.6,
   "windowYears": 30,
   "percentile": 0.775,
   "robustZ": 0.718,
@@ -1389,49 +1389,49 @@
  },
  "navs": {
   "Aditya Birla Sun Life Gold ETF": {
-   "nav": 123.4872,
+   "nav": 124.1763,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Aditya Birla Sun Life Silver ETF": {
-   "nav": 182.6541,
+   "nav": 184.5749,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "360 ONE Gold ETF": {
-   "nav": 137.1081,
+   "nav": 137.8673,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Axis Gold ETF": {
-   "nav": 116.8751,
+   "nav": 117.5229,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Choice Gold ETF": {
-   "nav": 139.3968,
+   "nav": 140.17,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "DSP Gold ETF": {
-   "nav": 13.6437,
+   "nav": 13.7197,
    "cat": "gold_etf",
-   "date": "08-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Groww Gold ETF": {
-   "nav": 13.7116,
+   "nav": 13.7873,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Mirae Asset Gold ETF": {
-   "nav": 136.5346,
+   "nav": 137.2925,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "UTI - Gold Exchange Traded Fund": {
-   "nav": 118.0756,
+   "nav": 118.7361,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Zerodha CASE Gold ETF": {
    "nav": 22.0884,
@@ -1439,39 +1439,39 @@
    "date": "06-Nov-2026"
   },
   "360 ONE Silver ETF": {
-   "nav": 179.9701,
+   "nav": 181.8662,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Axis Silver ETF": {
-   "nav": 182.1463,
+   "nav": 184.0429,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "DSP Silver ETF": {
-   "nav": 17.5837,
+   "nav": 17.7715,
    "cat": "silver_etf",
-   "date": "08-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Groww Silver ETF": {
-   "nav": 17.9555,
+   "nav": 18.1423,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Mirae Asset Silver ETF": {
-   "nav": 178.3838,
+   "nav": 180.2412,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "quant Silver ETF": {
-   "nav": 18.5298,
+   "nav": 18.7211,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "UTI Silver Exchange Traded Fund": {
-   "nav": 176.65,
+   "nav": 178.4942,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Zerodha CASE Silver ETF": {
    "nav": 18.4827,
@@ -1479,44 +1479,44 @@
    "date": "06-Nov-2026"
   },
   "Aditya Birla Sun Life Silver ETF FOF": {
-   "nav": 28.3791,
+   "nav": 28.6268,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Axis Gold and Silver Passive FOF": {
-   "nav": 9.5009,
+   "nav": 9.5796,
    "cat": "combo_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Axis Gold Fund": {
-   "nav": 44.1745,
+   "nav": 44.5402,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Axis Silver Fund of Fund": {
-   "nav": 31.4592,
+   "nav": 31.7189,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Baroda BNP Paribas Gold ETF Fund of Fund": {
-   "nav": 14.0714,
+   "nav": 14.0965,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Groww Gold ETF FOF": {
-   "nav": 17.2279,
+   "nav": 17.327,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Groww Silver ETF FOF": {
-   "nav": 17.8564,
+   "nav": 18.03,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "HDFC GOLD SILVER PASSIVE FOF": {
-   "nav": 8.8463,
+   "nav": 8.9128,
    "cat": "combo_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "HSBC Gold ETF Fund of Fund": {
    "nav": 9.7015,
@@ -1524,24 +1524,24 @@
    "date": "06-Nov-2026"
   },
   "Invesco India Gold ETF Fund of Fund": {
-   "nav": 41.0134,
+   "nav": 41.3208,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Mirae Asset Gold ETF Fund of Fund": {
-   "nav": 17.787,
+   "nav": 17.817,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Mirae Asset Gold Silver Passive FoF": {
-   "nav": 14.685,
+   "nav": 14.756,
    "cat": "combo_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Mirae Asset Silver ETF FOF": {
-   "nav": 8.189,
+   "nav": 8.265,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Shriram Gold ETF Passive FOF": {
    "nav": 9.5967,
@@ -1549,59 +1549,59 @@
    "date": "06-Nov-2026"
   },
   "UTI Gold ETF Fund of Fund": {
-   "nav": 27.0583,
+   "nav": 27.1953,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "UTI Silver ETF Fund of Fund": {
-   "nav": 23.4083,
+   "nav": 23.6294,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Zerodha CASE Gold ETF FoF": {
-   "nav": 18.3445,
+   "nav": 18.4354,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Zerodha CASE Silver ETF FoF": {
-   "nav": 16.6045,
+   "nav": 16.73,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Aditya Birla Sun Life Gold Fund": {
-   "nav": 42.4509,
+   "nav": 42.6009,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ANGEL ONE GOLD ETF FOF": {
-   "nav": 12.8049,
+   "nav": 12.8436,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ANGEL ONE SILVER ETF FOF": {
-   "nav": 6.3712,
+   "nav": 6.4345,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Bandhan Gold ETF FOF": {
-   "nav": 9.2038,
+   "nav": 9.2509,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Bandhan Silver ETF FOF": {
-   "nav": 6.0136,
+   "nav": 6.0799,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "DSP Gold ETF Fund of Fund": {
-   "nav": 22.1315,
+   "nav": 22.2605,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "DSP Silver ETF Fund of Fund": {
-   "nav": 18.9303,
+   "nav": 19.1022,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Edelweiss Gold and Silver ETF FOF": {
    "nav": 29.397,
@@ -1619,194 +1619,194 @@
    "date": "06-Nov-2026"
   },
   "HDFC Gold ETF Fund of Fund": {
-   "nav": 43.806,
+   "nav": 44.0717,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "HDFC Silver ETF Fund of Fund": {
-   "nav": 30.1432,
+   "nav": 30.4619,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ICICI Prudential Gold ETF FOF": {
-   "nav": 44.8863,
+   "nav": 45.2139,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ICICI Prudential Silver ETF FOF": {
-   "nav": 27.9754,
+   "nav": 28.1988,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Kotak Gold Fund": {
-   "nav": 56.5955,
+   "nav": 57.0534,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Kotak Gold Silver Passive FOF": {
-   "nav": 12.965,
+   "nav": 13.087,
    "cat": "combo_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Kotak Silver ETF Fund of Fund": {
-   "nav": 24.4455,
+   "nav": 24.7042,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "LIC MF Gold ETF Fund of Fund": {
-   "nav": 38.3839,
+   "nav": 38.5327,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Motilal Oswal Gold and Silver Passive Fund of Funds": {
-   "nav": 27.2287,
+   "nav": 27.4454,
    "cat": "combo_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Nippon India Gold Savings Fund": {
-   "nav": 55.9946,
+   "nav": 56.3123,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Nippon India Silver ETF FOF": {
-   "nav": 27.8227,
+   "nav": 28.0834,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Quantum Gold ETF FOF": {
-   "nav": 53.8094,
+   "nav": 54.1278,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "SBI GOLD FUND": {
-   "nav": 42.88,
+   "nav": 43.1398,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "SBI Silver ETF Fund of Fund": {
-   "nav": 19.529,
+   "nav": 19.7026,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Tata Gold ETF Fund of Fund": {
-   "nav": 21.6087,
+   "nav": 21.703,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Tata Silver ETF Fund of Fund": {
-   "nav": 24.0048,
+   "nav": 24.2451,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "The Wealth Company Gold ETF FOF": {
-   "nav": 8.9081,
+   "nav": 8.9727,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Union Gold ETF Fund of Fund": {
-   "nav": 16.0327,
+   "nav": 16.1533,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ANGEL ONE GOLD ETF": {
-   "nav": 13.1231,
+   "nav": 13.1957,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Edelweiss Gold ETF": {
-   "nav": 140.3254,
+   "nav": 141.1011,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "HDFC Gold ETF": {
-   "nav": 119.8847,
+   "nav": 120.5528,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "HSBC Gold ETF": {
-   "nav": 122.2316,
+   "nav": 122.9015,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ICICI Prudential Gold ETF": {
-   "nav": 120.2176,
+   "nav": 120.8858,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "KOTAK GOLD ETF": {
-   "nav": 117.1402,
+   "nav": 117.7945,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "LIC MF Gold Exchange Traded Fund": {
-   "nav": 126.5231,
+   "nav": 127.2273,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Motilal Oswal Gold ETF": {
-   "nav": 138.8779,
+   "nav": 139.6425,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Nippon India ETF Gold BeES": {
-   "nav": 115.9743,
+   "nav": 116.6176,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Quantum Gold ETF": {
-   "nav": 116.2667,
+   "nav": 116.9163,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Tata Gold Exchange Traded Fund": {
-   "nav": 13.6512,
+   "nav": 13.7268,
    "cat": "gold_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Union Gold ETF": {
-   "nav": 137.487,
+   "nav": 138.2459,
    "cat": "gold_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ANGEL ONE SILVER ETF": {
-   "nav": 7.0234,
+   "nav": 7.0955,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Edelweiss Silver ETF": {
-   "nav": 182.9945,
+   "nav": 184.8962,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "HDFC Silver ETF": {
-   "nav": 174.9445,
+   "nav": 176.7609,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "ICICI PRUDENTIAL SILVER ETF": {
-   "nav": 182.4471,
+   "nav": 184.3722,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Kotak Silver ETF": {
-   "nav": 17.7473,
+   "nav": 17.9341,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Motilal Oswal Silver ETF": {
-   "nav": 181.2625,
+   "nav": 183.1368,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Nippon India Silver ETF": {
-   "nav": 174.9034,
+   "nav": 176.7341,
    "cat": "silver_etf",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   },
   "Tata Silver Exchange Traded Fund": {
-   "nav": 17.8162,
+   "nav": 17.9997,
    "cat": "silver_fof",
-   "date": "06-Nov-2026"
+   "date": "09-Nov-2026"
   }
  },
  "spark": {
