@@ -1,6 +1,6 @@
 {
- "generatedAt": "2026-11-12T10:05:12+00:00",
- "generatedIst": "12 Nov 2026, 15:35 IST",
+ "generatedAt": "2026-11-12T16:58:18+00:00",
+ "generatedIst": "12 Nov 2026, 22:28 IST",
  "asOfFix": "2026-11-11",
  "history": {
   "from": "1968-04-01",
@@ -8,17 +8,17 @@
   "lbmaTo": "2025-04-07"
  },
  "fx": {
-  "usdinr": 93.69,
-  "date": "2026-11-11",
+  "usdinr": 94.04,
+  "date": "2026-11-12",
   "source": "frankfurter.dev (ECB)"
  },
  "gold": {
   "usdOz": 3972.79,
-  "liveUsdOz": 3946.4,
+  "liveUsdOz": 3882.2,
   "inr": {
-   "parity": 11887.36,
-   "withDuty": 13670.46,
-   "withGst": 14080.58
+   "parity": 11737.66,
+   "withDuty": 13498.31,
+   "withGst": 13903.26
   },
   "last": 3972.7911,
   "sma50": 4179.07,
@@ -36,11 +36,11 @@
  },
  "silver": {
   "usdOz": 51.4498,
-  "liveUsdOz": 51.302,
+  "liveUsdOz": 50.28,
   "inr": {
-   "parity": 154.53,
-   "withDuty": 177.71,
-   "withGst": 183.04
+   "parity": 152.02,
+   "withDuty": 174.82,
+   "withGst": 180.07
   },
   "last": 51.4498,
   "sma50": 59.22,
@@ -58,7 +58,7 @@
  },
  "gsr": {
   "value": 77.217,
-  "liveValue": 76.925,
+  "liveValue": 77.212,
   "windowYears": 30,
   "percentile": 0.7513,
   "robustZ": 0.654,
@@ -968,7 +968,7 @@
    "premium": 3.62,
    "percentile": 0.8858,
    "avg90": 2.41,
-   "spread": 0.01,
+   "spread": 0.0,
    "sources": [
     {
      "source": "Nippon Silver ETF",
@@ -980,7 +980,7 @@
     },
     {
      "source": "ICICI Silver ETF",
-     "premium": 3.63,
+     "premium": 3.62,
      "percentile": 0.9273,
      "avg90": 2.43,
      "days": 1143,
@@ -1004,15 +1004,15 @@
     "name": "India large cap",
     "short": "Nifty 50",
     "what": "The Nifty 50, through an index fund. Measured off UTI's direct plan NAV.",
-    "weight": 0.1915,
+    "weight": 0.1962,
     "riskShare": 0.1667,
-    "vol": 17.15,
-    "volEwma": 16.73,
-    "volLong": 17.56,
-    "avgCorr": 0.345,
-    "ret1y": -2.92,
-    "mom12_1": -11.3,
-    "ddFromHigh": -4.08,
+    "vol": 17.04,
+    "volEwma": 16.52,
+    "volLong": 17.55,
+    "avgCorr": 0.344,
+    "ret1y": -1.72,
+    "mom12_1": -11.84,
+    "ddFromHigh": -3.27,
     "source": "AMFI NAV via mfapi.in, scheme 120716"
    },
    {
@@ -1020,15 +1020,15 @@
     "name": "India midcap",
     "short": "Nifty Midcap 150",
     "what": "The Nifty Midcap 150. Higher beta than the Nifty and the usual way an Indian portfolio reaches for growth at home.",
-    "weight": 0.1908,
+    "weight": 0.1953,
     "riskShare": 0.1667,
-    "vol": 17.48,
-    "volEwma": 16.56,
+    "vol": 17.38,
+    "volEwma": 16.36,
     "volLong": 18.34,
     "avgCorr": 0.334,
-    "ret1y": -0.61,
-    "mom12_1": -0.73,
-    "ddFromHigh": -4.88,
+    "ret1y": 0.85,
+    "mom12_1": -0.84,
+    "ddFromHigh": -4.07,
     "source": "AMFI NAV via mfapi.in, scheme 147621"
    },
    {
@@ -1036,15 +1036,15 @@
     "name": "US large cap",
     "short": "S&P 500",
     "what": "The S&P 500, converted to rupees. The single most widely held equity index on earth.",
-    "weight": 0.153,
+    "weight": 0.1579,
     "riskShare": 0.1667,
-    "vol": 20.69,
-    "volEwma": 22.08,
-    "volLong": 19.2,
-    "avgCorr": 0.37,
-    "ret1y": 19.95,
-    "mom12_1": 25.62,
-    "ddFromHigh": -6.15,
+    "vol": 20.4,
+    "volEwma": 21.54,
+    "volLong": 19.19,
+    "avgCorr": 0.369,
+    "ret1y": 21.81,
+    "mom12_1": 24.13,
+    "ddFromHigh": -5.53,
     "source": "FRED SP500, converted to rupees"
    },
    {
@@ -1052,15 +1052,15 @@
     "name": "US tech",
     "short": "Nasdaq 100",
     "what": "The Nasdaq 100, converted to rupees. Concentrated in a handful of very large technology companies.",
-    "weight": 0.1109,
+    "weight": 0.1143,
     "riskShare": 0.1667,
-    "vol": 29.53,
-    "volEwma": 33.98,
-    "volLong": 24.27,
+    "vol": 29.16,
+    "volEwma": 33.35,
+    "volLong": 24.26,
     "avgCorr": 0.349,
-    "ret1y": 19.29,
-    "mom12_1": 31.8,
-    "ddFromHigh": -13.03,
+    "ret1y": 22.51,
+    "mom12_1": 29.31,
+    "ddFromHigh": -11.8,
     "source": "FRED NASDAQ100, converted to rupees"
    },
    {
@@ -1068,15 +1068,15 @@
     "name": "Emerging ex India",
     "short": "EM ex India",
     "what": "China, Taiwan, Korea and Brazil, through an Indian feeder fund. Cheap on valuation for years, and still cheap.",
-    "weight": 0.1425,
+    "weight": 0.1407,
     "riskShare": 0.1667,
-    "vol": 21.45,
-    "volEwma": 24.32,
-    "volLong": 18.13,
-    "avgCorr": 0.388,
-    "ret1y": 16.18,
-    "mom12_1": 29.65,
-    "ddFromHigh": -18.5,
+    "vol": 22.12,
+    "volEwma": 25.48,
+    "volLong": 18.15,
+    "avgCorr": 0.387,
+    "ret1y": 21.24,
+    "mom12_1": 29.62,
+    "ddFromHigh": -16.35,
     "source": "AMFI NAV via mfapi.in, scheme 119779"
    },
    {
@@ -1084,15 +1084,15 @@
     "name": "Gold",
     "short": "Gold",
     "what": "The same LBMA gold the other two boards are built on, in rupees per gram.",
-    "weight": 0.2113,
+    "weight": 0.1956,
     "riskShare": 0.1667,
-    "vol": 20.53,
-    "volEwma": 23.05,
-    "volLong": 17.66,
-    "avgCorr": 0.153,
-    "ret1y": 7.27,
-    "mom12_1": 4.97,
-    "ddFromHigh": -22.09,
+    "vol": 22.65,
+    "volEwma": 26.68,
+    "volLong": 17.72,
+    "avgCorr": 0.151,
+    "ret1y": 3.5,
+    "mom12_1": 8.38,
+    "ddFromHigh": -25.08,
     "source": "LBMA gold PM fix, rupees per gram"
    }
   ],
@@ -1103,7 +1103,7 @@
     0.243,
     0.185,
     0.451,
-    0.109
+    0.107
    ],
    [
     0.735,
@@ -1111,7 +1111,7 @@
     0.215,
     0.174,
     0.421,
-    0.124
+    0.123
    ],
    [
     0.243,
@@ -1119,7 +1119,7 @@
     1.0,
     0.81,
     0.426,
-    0.154
+    0.152
    ],
    [
     0.185,
@@ -1127,7 +1127,7 @@
     0.81,
     1.0,
     0.423,
-    0.155
+    0.153
    ],
    [
     0.451,
@@ -1135,19 +1135,19 @@
     0.426,
     0.423,
     1.0,
-    0.222
+    0.217
    ],
    [
-    0.109,
-    0.124,
-    0.154,
-    0.155,
-    0.222,
+    0.107,
+    0.123,
+    0.152,
+    0.153,
+    0.217,
     1.0
    ]
   ],
-  "portVol": 13.29,
-  "equalWeightVol": 14.09,
+  "portVol": 13.52,
+  "equalWeightVol": 14.22,
   "bounds": [
    0.05,
    0.35
@@ -1155,48 +1155,48 @@
   "deploy": 1.0,
   "window": {
    "from": "2019-09-11",
-   "to": "2026-11-09",
-   "days": 1649,
+   "to": "2026-11-11",
+   "days": 1650,
    "obsPerYear": 230.2,
-   "years": 7.16
+   "years": 7.17
   },
   "backtest": {
    "sips": 62,
    "from": "2021-10-29",
-   "to": "2026-11-09",
+   "to": "2026-11-11",
    "invested": 310000,
    "monthly": 5000,
    "board": {
-    "multiple": 1.626,
+    "multiple": 1.6212,
     "maxDrawdown": -9.6
    },
    "equal": {
-    "multiple": 1.5981,
+    "multiple": 1.6021,
     "maxDrawdown": -8.59
    },
    "solo": {
     "nifty50": {
-     "multiple": 1.2318,
+     "multiple": 1.2421,
      "maxDrawdown": -12.66
     },
     "midcap150": {
-     "multiple": 1.408,
+     "multiple": 1.4199,
      "maxDrawdown": -16.2
     },
     "sp500": {
-     "multiple": 1.6636,
+     "multiple": 1.6747,
      "maxDrawdown": -16.58
     },
     "ndx100": {
-     "multiple": 1.8197,
+     "multiple": 1.8454,
      "maxDrawdown": -20.91
     },
     "emxi": {
-     "multiple": 1.5114,
+     "multiple": 1.5513,
      "maxDrawdown": -16.34
     },
     "gold": {
-     "multiple": 1.9544,
+     "multiple": 1.8792,
      "maxDrawdown": -21.0
     }
    },
@@ -1219,15 +1219,15 @@
     "name": "US large cap",
     "short": "S&P 500",
     "what": "The S&P 500, converted to rupees. The single most widely held equity index on earth.",
-    "weight": 0.2192,
+    "weight": 0.2291,
     "riskShare": 0.2,
-    "vol": 19.98,
-    "volEwma": 22.05,
+    "vol": 19.69,
+    "volEwma": 21.52,
     "volLong": 17.68,
-    "avgCorr": 0.33,
-    "ret1y": 21.01,
-    "mom12_1": 25.62,
-    "ddFromHigh": -6.15,
+    "avgCorr": 0.329,
+    "ret1y": 21.44,
+    "mom12_1": 24.13,
+    "ddFromHigh": -5.53,
     "source": "FRED SP500, converted to rupees"
    },
    {
@@ -1235,15 +1235,15 @@
     "name": "US tech",
     "short": "Nasdaq 100",
     "what": "The Nasdaq 100, converted to rupees. Concentrated in a handful of very large technology companies.",
-    "weight": 0.1531,
+    "weight": 0.1598,
     "riskShare": 0.2,
-    "vol": 28.79,
-    "volEwma": 33.94,
-    "volLong": 22.5,
+    "vol": 28.44,
+    "volEwma": 33.32,
+    "volLong": 22.51,
     "avgCorr": 0.326,
-    "ret1y": 20.8,
-    "mom12_1": 31.8,
-    "ddFromHigh": -13.03,
+    "ret1y": 21.91,
+    "mom12_1": 29.31,
+    "ddFromHigh": -11.8,
     "source": "FRED NASDAQ100, converted to rupees"
    },
    {
@@ -1251,15 +1251,15 @@
     "name": "Emerging ex India",
     "short": "EM ex India",
     "what": "China, Taiwan, Korea and Brazil, through an Indian feeder fund. Cheap on valuation for years, and still cheap.",
-    "weight": 0.2275,
+    "weight": 0.227,
     "riskShare": 0.2,
-    "vol": 20.72,
-    "volEwma": 24.29,
-    "volLong": 16.41,
-    "avgCorr": 0.263,
-    "ret1y": 18.12,
-    "mom12_1": 29.65,
-    "ddFromHigh": -18.5,
+    "vol": 21.43,
+    "volEwma": 25.46,
+    "volLong": 16.43,
+    "avgCorr": 0.262,
+    "ret1y": 21.79,
+    "mom12_1": 29.62,
+    "ddFromHigh": -16.35,
     "source": "AMFI NAV via mfapi.in, scheme 119779"
    },
    {
@@ -1267,15 +1267,15 @@
     "name": "Gold",
     "short": "Gold",
     "what": "The same LBMA gold the other two boards are built on, in rupees per gram.",
-    "weight": 0.2867,
+    "weight": 0.2666,
     "riskShare": 0.2,
-    "vol": 19.87,
-    "volEwma": 23.02,
-    "volLong": 16.1,
-    "avgCorr": 0.125,
-    "ret1y": 7.64,
-    "mom12_1": 4.97,
-    "ddFromHigh": -22.09,
+    "vol": 22.04,
+    "volEwma": 26.66,
+    "volLong": 16.16,
+    "avgCorr": 0.123,
+    "ret1y": 1.91,
+    "mom12_1": 8.38,
+    "ddFromHigh": -25.08,
     "source": "LBMA gold PM fix, rupees per gram"
    },
    {
@@ -1283,15 +1283,15 @@
     "name": "Bitcoin",
     "short": "Bitcoin",
     "what": "Bitcoin, held through a US listed spot Bitcoin ETF. Offshore only: no Indian mutual fund may hold crypto.",
-    "weight": 0.1135,
+    "weight": 0.1175,
     "riskShare": 0.2,
-    "vol": 55.07,
-    "volEwma": 39.61,
-    "volLong": 67.06,
+    "vol": 54.82,
+    "volEwma": 38.86,
+    "volLong": 67.08,
     "avgCorr": 0.056,
-    "ret1y": -13.96,
-    "mom12_1": -18.47,
-    "ddFromHigh": -36.63,
+    "ret1y": -16.06,
+    "mom12_1": -16.33,
+    "ddFromHigh": -37.63,
     "source": "blockchain.info market price, converted to rupees"
    }
   ],
@@ -1300,85 +1300,85 @@
     1.0,
     0.788,
     0.383,
-    0.124,
-    0.024
+    0.123,
+    0.023
    ],
    [
     0.788,
     1.0,
     0.381,
-    0.122,
-    0.015
+    0.121,
+    0.014
    ],
    [
     0.383,
     0.381,
     1.0,
-    0.177,
+    0.174,
     0.11
    ],
    [
-    0.124,
-    0.122,
-    0.177,
+    0.123,
+    0.121,
+    0.174,
     1.0,
-    0.075
+    0.076
    ],
    [
-    0.024,
-    0.015,
+    0.023,
+    0.014,
     0.11,
-    0.075,
+    0.076,
     1.0
    ]
   ],
-  "portVol": 15.17,
-  "equalWeightVol": 17.51,
+  "portVol": 15.63,
+  "equalWeightVol": 17.63,
   "bounds": [
    0.05,
    0.35
   ],
   "deploy": 1.0,
   "window": {
-   "from": "2016-11-11",
-   "to": "2026-11-09",
+   "from": "2016-11-15",
+   "to": "2026-11-11",
    "days": 2295,
-   "obsPerYear": 229.7,
+   "obsPerYear": 229.8,
    "years": 9.99
   },
   "backtest": {
    "sips": 95,
-   "from": "2019-01-25",
-   "to": "2026-11-09",
+   "from": "2019-01-28",
+   "to": "2026-11-11",
    "invested": 475000,
    "monthly": 5000,
    "board": {
-    "multiple": 2.3336,
-    "maxDrawdown": -18.77
+    "multiple": 2.3192,
+    "maxDrawdown": -18.78
    },
    "equal": {
-    "multiple": 2.7258,
-    "maxDrawdown": -38.22
+    "multiple": 2.7112,
+    "maxDrawdown": -38.23
    },
    "solo": {
     "sp500": {
-     "multiple": 2.1351,
+     "multiple": 2.1495,
      "maxDrawdown": -25.68
     },
     "ndx100": {
-     "multiple": 2.5129,
+     "multiple": 2.5491,
      "maxDrawdown": -22.57
     },
     "emxi": {
-     "multiple": 1.6867,
+     "multiple": 1.7312,
      "maxDrawdown": -25.4
     },
     "gold": {
-     "multiple": 2.4358,
-     "maxDrawdown": -23.19
+     "multiple": 2.3418,
+     "maxDrawdown": -23.18
     },
     "btc": {
-     "multiple": 4.8584,
+     "multiple": 4.7844,
      "maxDrawdown": -71.56
     }
    },
@@ -1389,14 +1389,14 @@
  },
  "navs": {
   "Aditya Birla Sun Life Gold ETF": {
-   "nav": 122.5602,
+   "nav": 120.2745,
    "cat": "gold_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Aditya Birla Sun Life Silver ETF": {
-   "nav": 184.4991,
+   "nav": 179.7403,
    "cat": "silver_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "360 ONE Gold ETF": {
    "nav": 136.0845,
@@ -1409,19 +1409,19 @@
    "date": "11-Nov-2026"
   },
   "Choice Gold ETF": {
-   "nav": 138.3544,
+   "nav": 135.7872,
    "cat": "gold_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "DSP Gold ETF": {
-   "nav": 13.5422,
+   "nav": 13.291,
    "cat": "gold_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Groww Gold ETF": {
-   "nav": 13.6092,
+   "nav": 13.3575,
    "cat": "gold_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Mirae Asset Gold ETF": {
    "nav": 135.5163,
@@ -1449,14 +1449,14 @@
    "date": "11-Nov-2026"
   },
   "DSP Silver ETF": {
-   "nav": 17.7641,
+   "nav": 17.2995,
    "cat": "silver_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Groww Silver ETF": {
-   "nav": 18.1347,
+   "nav": 17.6703,
    "cat": "silver_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Mirae Asset Silver ETF": {
    "nav": 180.1676,
@@ -1479,9 +1479,9 @@
    "date": "11-Nov-2026"
   },
   "Aditya Birla Sun Life Silver ETF FOF": {
-   "nav": 28.7087,
+   "nav": 27.8999,
    "cat": "silver_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Axis Gold and Silver Passive FOF": {
    "nav": 9.5068,
@@ -1504,14 +1504,14 @@
    "date": "11-Nov-2026"
   },
   "Groww Gold ETF FOF": {
-   "nav": 17.1037,
+   "nav": 16.7049,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Groww Silver ETF FOF": {
-   "nav": 18.0493,
+   "nav": 17.5059,
    "cat": "silver_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "HDFC GOLD SILVER PASSIVE FOF": {
    "nav": 8.8372,
@@ -1569,19 +1569,19 @@
    "date": "11-Nov-2026"
   },
   "Aditya Birla Sun Life Gold Fund": {
-   "nav": 42.0457,
+   "nav": 41.2139,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "ANGEL ONE GOLD ETF FOF": {
-   "nav": 12.6978,
+   "nav": 12.4254,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "ANGEL ONE SILVER ETF FOF": {
-   "nav": 6.4434,
+   "nav": 6.262,
    "cat": "silver_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Bandhan Gold ETF FOF": {
    "nav": 9.1421,
@@ -1594,14 +1594,14 @@
    "date": "11-Nov-2026"
   },
   "DSP Gold ETF Fund of Fund": {
-   "nav": 21.9689,
+   "nav": 21.4674,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "DSP Silver ETF Fund of Fund": {
-   "nav": 19.1235,
+   "nav": 18.5638,
    "cat": "silver_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Edelweiss Gold and Silver ETF FOF": {
    "nav": 29.465,
@@ -1629,14 +1629,14 @@
    "date": "11-Nov-2026"
   },
   "ICICI Prudential Gold ETF FOF": {
-   "nav": 44.5612,
+   "nav": 43.6181,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "ICICI Prudential Silver ETF FOF": {
-   "nav": 28.2707,
+   "nav": 27.4301,
    "cat": "silver_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Kotak Gold Fund": {
    "nav": 56.276,
@@ -1674,9 +1674,9 @@
    "date": "11-Nov-2026"
   },
   "Quantum Gold ETF FOF": {
-   "nav": 53.4355,
+   "nav": 52.2311,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "SBI GOLD FUND": {
    "nav": 42.5861,
@@ -1699,9 +1699,9 @@
    "date": "11-Nov-2026"
   },
   "The Wealth Company Gold ETF FOF": {
-   "nav": 8.8761,
+   "nav": 8.686,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Union Gold ETF Fund of Fund": {
    "nav": 15.9228,
@@ -1709,9 +1709,9 @@
    "date": "11-Nov-2026"
   },
   "ANGEL ONE GOLD ETF": {
-   "nav": 13.0258,
+   "nav": 12.7854,
    "cat": "gold_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Edelweiss Gold ETF": {
    "nav": 139.2795,
@@ -1729,9 +1729,9 @@
    "date": "11-Nov-2026"
   },
   "ICICI Prudential Gold ETF": {
-   "nav": 119.3163,
+   "nav": 117.097,
    "cat": "gold_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "KOTAK GOLD ETF": {
    "nav": 116.2587,
@@ -1739,9 +1739,9 @@
    "date": "11-Nov-2026"
   },
   "LIC MF Gold Exchange Traded Fund": {
-   "nav": 125.5752,
+   "nav": 123.2388,
    "cat": "gold_fof",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Motilal Oswal Gold ETF": {
    "nav": 137.8435,
@@ -1754,9 +1754,9 @@
    "date": "11-Nov-2026"
   },
   "Quantum Gold ETF": {
-   "nav": 115.3874,
+   "nav": 113.2262,
    "cat": "gold_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Tata Gold Exchange Traded Fund": {
    "nav": 13.5498,
@@ -1784,9 +1784,9 @@
    "date": "11-Nov-2026"
   },
   "ICICI PRUDENTIAL SILVER ETF": {
-   "nav": 184.2954,
+   "nav": 179.5228,
    "cat": "silver_etf",
-   "date": "11-Nov-2026"
+   "date": "12-Nov-2026"
   },
   "Kotak Silver ETF": {
    "nav": 17.9267,
